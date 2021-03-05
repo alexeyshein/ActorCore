@@ -4,9 +4,10 @@ project("json" LANGUAGES CXX)
 
 ## TARGET
 ## create target and add include path
-add_library(${PROJECT_NAME} INTERFACE)
-add_library(nlohmann_json::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
-
+if (NOT TARGET ${PROJECT_NAME})
+    add_library(${PROJECT_NAME} INTERFACE)
+    add_library(nlohmann_json::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+endif()
 
 file(GLOB SOURCES 
     ${PROJECT_SOURCE_DIR}/*.hpp
