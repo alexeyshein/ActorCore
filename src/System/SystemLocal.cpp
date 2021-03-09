@@ -1,5 +1,7 @@
 #include "SystemLocal.h"
 
+#include <iostream>
+
 #include "IAbstractActor.h"
 #include "ActorFactoryCollection.hpp"
 #include "UidGenerator.hpp"
@@ -11,6 +13,55 @@ using rf::SystemLocal;
 
 SystemLocal::SystemLocal()
 {
+}
+
+bool SystemLocal::Init(nlohmann::json scheme)
+{
+  Clear();
+  // Init Actors
+  const auto  actorsJson = scheme.find("actors");
+  if (actorsJson == scheme.end())
+   {
+      std::cerr << "Actors Not Found";
+      return false;
+   }
+  for (const auto &actorJson : *actorsJson)
+  {
+    auto actor = Spawn(actorJson);
+    if (!actor)
+    {
+      std::cerr << "Actor wasn`t spawned:"<<actorJson;
+      Clear();
+      return false;
+    }  
+  }
+  // Init Connections
+  auto const connectionsJson = scheme.find("connections");
+  if (connectionsJson == scheme.end())
+   {
+      std::cerr << "Connections Not Found";
+      return false;
+   }
+  for (const auto &connectionJson : *connectionsJson)
+  {
+      if(!Connect(connectionJson))
+      {
+        std::cerr << "Connection problem:"<<connectionJson;
+        return false;
+      }
+  }
+  return true;
+}
+
+void SystemLocal::Clear()
+{
+  //_mapActors.clear();
+  for (auto it = _mapActors.begin(); it != _mapActors.end();)
+  {
+    auto actor = it->second;
+    this->RemoveAllConectionsWithActor(actor);
+    it = _mapActors.erase(it);
+  }
 }
 
 //by json
@@ -100,6 +151,23 @@ bool SystemLocal::Connect(std::string idActor1, std::string idPortActor1, std::s
   //actor2->
 }
 
+bool SystemLocal::Connect(json connection)
+{
+  try
+  {
+    std::string idActor1 = connection.at(0).get<std::string>();
+    std::string idPortActor1 = connection.at(1).get<std::string>();
+    std::string idActor2 = connection.at(2).get<std::string>();
+    std::string idPortActor2 = connection.at(3).get<std::string>();
+    return Connect(idActor1, idPortActor1, idActor2, idPortActor2);
+  }
+  catch (...)
+  {
+  }
+  return false;
+}
+
+
 void SystemLocal::Disconnect(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2)
 {
   auto actor1 = GetActorById(idActor1);
@@ -115,6 +183,22 @@ void SystemLocal::Disconnect(std::string idActor1, std::string idPortActor1, std
       actor2->Disconnect(port1, idPortActor2);
   }
 }
+
+void SystemLocal::Disconnect(json connection)
+{
+  try
+  {
+    std::string idActor1 = connection.at(0).get<std::string>();
+    std::string idPortActor1 = connection.at(1).get<std::string>();
+    std::string idActor2 = connection.at(2).get<std::string>();
+    std::string idPortActor2 = connection.at(3).get<std::string>();
+    Disconnect(idActor1, idPortActor1, idActor2, idPortActor2);
+  }
+  catch (...)
+  {
+  }
+}
+
 
 void SystemLocal::RemoveAllConectionsWithActor(std::shared_ptr<IAbstractActor> actorTarget)
 {

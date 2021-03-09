@@ -15,7 +15,9 @@ namespace rf
     SystemLocal();
 
     virtual ~SystemLocal() = default;
-    std::shared_ptr<IAbstractActor> Spawn(json);        //by json
+    bool Init(json);
+    void Clear();
+    std::shared_ptr<IAbstractActor> Spawn(json);        //spawn one actor
     std::shared_ptr<IAbstractActor> Spawn(std::string); //by name
     std::shared_ptr<IAbstractActor> GetActorById(std::string);
     bool Attach(std::shared_ptr<IAbstractActor> pointer);
@@ -24,7 +26,10 @@ namespace rf
     std::set<std::string> GetRegisteredActorTypes();
     size_t countActors(){return _mapActors.size();}
     bool Connect(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2);
+    bool Connect(json);
     void Disconnect(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2);
+    void Disconnect(json);
+
   protected:
     void RemoveAllConectionsWithActor(std::shared_ptr<IAbstractActor>);
   protected:
