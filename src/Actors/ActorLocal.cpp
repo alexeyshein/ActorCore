@@ -17,6 +17,15 @@ bool ActorLocal::Init(json)
   return false;
 }
 
+json ActorLocal::Configuration()
+{
+   return {
+     {"id",_id},
+     {"typeId",_typeId},
+   };
+}
+
+
 std::vector<std::shared_ptr<IPort>> ActorLocal::GetPorts()
 {
   std::vector<std::shared_ptr<IPort>> ports;
@@ -33,7 +42,7 @@ std::variant<bool, int, double> ActorLocal::GetProperty(std::string)
 json ActorLocal::GetStatus()
 {
   json res;
-  res["ID"] = _id;
+  res["id"] = _id;
   // res["Recived frames"] = recivedFramesByPeriod;
   // recivedFramesByPeriod = 0;
   // res["Processed frames"] = processedFramesByPeriod;

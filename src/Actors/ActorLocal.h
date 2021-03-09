@@ -13,6 +13,8 @@ namespace rf
 
     bool Init(json) override;
 
+    json Configuration() override;
+
     //Returns the ID of this actor.
     std::string id() override { return _id; }
     std::string typeId() {return  _typeId;}

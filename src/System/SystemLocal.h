@@ -16,6 +16,7 @@ namespace rf
 
     virtual ~SystemLocal() = default;
     bool Init(json);
+    json Scheme();
     void Clear();
     std::shared_ptr<IAbstractActor> Spawn(json);        //spawn one actor
     std::shared_ptr<IAbstractActor> Spawn(std::string); //by name

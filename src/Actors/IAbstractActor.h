@@ -16,6 +16,8 @@ namespace rf
 
     virtual bool Init(json) = 0;
 
+    virtual json Configuration() = 0;
+
     //Returns the ID of this actor.
     virtual std::string id() = 0;
 

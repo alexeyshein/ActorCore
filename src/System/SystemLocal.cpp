@@ -53,6 +53,17 @@ bool SystemLocal::Init(nlohmann::json scheme)
   return true;
 }
 
+
+json SystemLocal::Scheme()
+{
+  json jsonScheme{};
+  auto jsonActors = json::array();
+  for(const auto& [actorId, actor]:_mapActors)
+   jsonActors.push_back(actor->Configuration());
+  jsonScheme.emplace_back(jsonActors);
+  return jsonScheme;
+}
+
 void SystemLocal::Clear()
 {
   //_mapActors.clear();
