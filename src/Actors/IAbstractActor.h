@@ -14,29 +14,29 @@ namespace rf
   public:
     virtual ~IAbstractActor() = default;
 
-    virtual bool Init(json) = 0;
+    virtual bool Init(const json&) = 0;
 
     virtual json Configuration() = 0;
 
     //Returns the ID of this actor.
-    virtual std::string id() = 0;
+    virtual std::string Id() = 0;
 
     virtual std::vector<std::shared_ptr<IPort>> GetPorts() = 0;
 
-    virtual std::shared_ptr<IPort> GetPortById(std::string) = 0;
+    virtual std::shared_ptr<IPort> GetPortById(const std::string&) = 0;
 
-    virtual std::variant<bool, int, double> GetProperty(std::string) = 0;
+    virtual std::variant<bool, int, double> GetProperty(const std::string&) = 0;
 
-    virtual bool ConnectTo(std::shared_ptr<IPort> port, std::string portId) = 0;
+    virtual bool ConnectTo(std::shared_ptr<IPort>& port, const std::string& portId) = 0;
 
-    virtual bool ConnectTo(std::shared_ptr<IAbstractActor> actorExternal, std::string portIdExternal, std::string portIdInternal) = 0;
+    virtual bool ConnectTo(std::shared_ptr<IAbstractActor>& actorExternal, const std::string& portIdExternal, const std::string& portIdInternal) = 0;
 
-    virtual void Disconnect(std::shared_ptr<IPort> portExternal, std::string portIdInternal) = 0; //Удаляет соединение и на своем порту и на удаленном
+    virtual void Disconnect(std::shared_ptr<IPort>& portExternal, const std::string& portIdInternal) = 0; //Удаляет соединение и на своем порту и на удаленном
         
-    virtual void Disconnect(std::string portIdExternal, std::string portIdInternal) = 0; //Удаляет соединение только на своем порту
+    virtual void Disconnect(const std::string& portIdExternal, const std::string& portIdInternal) = 0; //Удаляет соединение только на своем порту
  
     // Disconnect all internall wports with external (portIdExternal)
-    virtual void DisconnectAll(std::string portIdExternal) = 0;
+    virtual void DisconnectAll(const std::string& portIdExternal) = 0;
 
     virtual bool IsActive() = 0;
 

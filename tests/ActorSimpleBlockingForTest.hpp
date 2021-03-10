@@ -9,7 +9,7 @@ public:
     rf::ActorBlocking(id)
     , steps(0)
     { 
-        _typeId = "ActorSimpleBlockingForTest";
+        _type = "ActorSimpleBlockingForTest";
         std::cout << "Constructor " << typeid(this).name() << std::endl; 
        portOut = addPort(std::string("Output"));
        

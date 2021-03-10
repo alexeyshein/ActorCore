@@ -83,10 +83,11 @@ std::shared_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor)
   {
     std::string typeName = jsonActor["type"].get<std::string>();
     std::string id = jsonActor["id"].get<std::string>();
-    std::shared_ptr<IAbstractActor> actorPtr(ActorFactoryCollection::Create(typeName, id));
-    _mapActors.emplace(std::make_pair(actorPtr->id(), actorPtr));
-    auto res = SystemLocal::Spawn(typeName);
-    res->Init(jsonActor);
+    actorPtr =  std::shared_ptr<IAbstractActor>(ActorFactoryCollection::Create(typeName, id));
+    if(!actorPtr)
+      return actorPtr;
+    Attach(actorPtr);
+    actorPtr->Init(jsonActor);
   }
   catch (...)
   {
@@ -99,16 +100,16 @@ std::shared_ptr<IAbstractActor> SystemLocal::Spawn(std::string typeName)
 {
   std::string id = UidGenerator::Generate(typeName);
   std::shared_ptr<IAbstractActor> actorPtr(ActorFactoryCollection::Create(typeName, id));
-  if (actorPtr)
-    _mapActors.emplace(std::make_pair(actorPtr->id(), actorPtr));
+  if(actorPtr)
+    Attach(actorPtr);
   return actorPtr;
 }
 
 bool SystemLocal::Attach(std::shared_ptr<IAbstractActor> actorPtr)
 {
-  if (_mapActors.count(actorPtr->id()) != 0)
+  if (_mapActors.count(actorPtr->Id()) != 0)
     return false;
-  _mapActors.emplace(std::make_pair(actorPtr->id(), actorPtr));
+  _mapActors.emplace(std::make_pair(actorPtr->Id(), actorPtr));
   return true;
 }
 
@@ -219,7 +220,7 @@ void SystemLocal::RemoveAllConectionsWithActor(std::shared_ptr<IAbstractActor> a
     actorPort->CleanObservers();
     for (auto [actorId, actor] : _mapActors)
     {
-      actor->DisconnectAll(actorPort->id());
+      actor->DisconnectAll(actorPort->Id());
     }
   }
 }

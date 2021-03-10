@@ -7,7 +7,7 @@ PortBiDirectional::PortBiDirectional(std::string id)
 , rf::PortInput(id)
 , rf::PortOutput(id)
 {
-  _typeId = "PortBiDirectional";
+  _type = "PortBiDirectional";
 
 }
 

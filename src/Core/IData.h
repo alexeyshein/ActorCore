@@ -7,7 +7,7 @@ namespace rf
 struct IData
 {
   virtual ~IData()=default;
-  virtual std::string typeId() {return std::string("IData");};
+  virtual std::string type() {return std::string("IData");};
 
 };
 }

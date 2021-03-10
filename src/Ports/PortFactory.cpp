@@ -35,8 +35,8 @@ std::vector<std::string> PortFactory::GetTypes()
 /** \brief	. */
 extern "C" {
 
-	void* setup_plugin(void) {
-		return new PortFactory();
-	}
+	// void* setup_plugin(void) {
+	// 	return new PortFactory();
+	// }
 }
 

@@ -8,13 +8,13 @@ namespace rf
 	class ActorBlocking : public ActorLocal
 	{
 	public:
-		ActorBlocking(std::string id);
+		ActorBlocking(const std::string& id);
 
 		 ~ActorBlocking() override;
          //~ActorBlocking() = default;
-		bool Init(json) override;
+		bool Init(const json&) override;
 
-		std::variant<bool, int, double> GetProperty(std::string) override;
+		std::variant<bool, int, double> GetProperty(const std::string&) override;
 
 
 	   json GetStatus() override;

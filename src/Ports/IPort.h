@@ -16,7 +16,7 @@ class IPort
   public:
   //IPort(IAbstractActor *owner)
   virtual ~IPort()=default;
-  virtual std::string id()  = 0;
+  virtual std::string Id()  = 0;
   virtual bool Init(json) = 0;
 
   //for oututs specific

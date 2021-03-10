@@ -8,7 +8,7 @@ PortInput::PortInput(std::string id)
 , isTrigger(true)
 , _queuePtrData(0)
 {
-  _typeId = "PortInput";
+  _type = "PortInput";
 }
 
 bool PortInput::Init(json)

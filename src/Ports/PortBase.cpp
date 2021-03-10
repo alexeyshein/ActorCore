@@ -4,7 +4,7 @@ using  rf::PortBase;
 
 PortBase::PortBase(std::string id):
  _id(id)
-, _typeId("PortBase")
+, _type("PortBase")
 {
 
 }

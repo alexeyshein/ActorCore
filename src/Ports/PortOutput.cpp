@@ -6,7 +6,7 @@ using rf::PortOutput;
 PortOutput::PortOutput(std::string id)
     : rf::PortBase(id)
 {
-  _typeId = "PortOutput";
+  _type = "PortOutput";
   publisher.SetAsyncMode(true);
   publisher.SetAsyncQueueSize(0);
 }
@@ -20,14 +20,14 @@ bool PortOutput::Init(json)
 
 void PortOutput::Attach(std::shared_ptr<rf::IPort> ptrRemotePort)
 {
-  std::size_t linkId = std::hash<std::string>{}(ptrRemotePort->id());
+  std::size_t linkId = std::hash<std::string>{}(ptrRemotePort->Id());
   std::function<void(const std::shared_ptr<IData> &)> f = std::bind(&rf::IPort::Receive, ptrRemotePort.get(), std::placeholders::_1);
   publisher.Attach(linkId, f);
 }
 
 void PortOutput::Detach(std::shared_ptr<IPort> ptrRemotePort)
 {
-  this->Detach(ptrRemotePort->id());
+  this->Detach(ptrRemotePort->Id());
 }
 
 void PortOutput::Detach(std::string remotePortId)

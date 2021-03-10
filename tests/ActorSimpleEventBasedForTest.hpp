@@ -9,12 +9,12 @@ public:
     rf::ActorEventBased(id)
     , steps(0)
     { 
-        _typeId = "ActorSimpleEventBasedForTest";
+        _type = "ActorSimpleEventBasedForTest";
         std::cout << "Constructor " << typeid(this).name() << std::endl; 
         portInput = addPort(std::string("Input"));
         portOut = addPort(std::string("Output"));
     }
-    void onInputReceive(std::string idPort, std::shared_ptr<rf::IData> data) override
+    void OnInputReceive(std::string idPort, std::shared_ptr<rf::IData> data) override
     {
         steps++;
         //std::cout <<idPort<<"->"<<id()<<" onRecive : "<<steps<< std::endl;

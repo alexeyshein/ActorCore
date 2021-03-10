@@ -1,5 +1,7 @@
 #pragma once
 
+#include <future>
+
 #include "ActorLocal.h"
 
 namespace rf
@@ -7,15 +9,24 @@ namespace rf
   class ActorEventBased : public ActorLocal
   {
   public:
-    ActorEventBased(std::string id);
+    ActorEventBased(const std::string& id);
 
     virtual ~ActorEventBased() = default;
 
-    bool Init(json) override;
+    bool Init(const json&) override;
 
-    std::variant<bool, int, double> GetProperty(std::string) override;
+    std::variant<bool, int, double> GetProperty(const std::string&) override;
+    
+    virtual void OnInputReceive(const std::string&, std::shared_ptr<IData>&) final;
 
   protected:
+   
+   virtual bool ApproveTask(const std::string&, std::shared_ptr<IData>&) {return true;};
+
+   virtual void Process(const std::string& portId, std::shared_ptr<IData>& dataPtr) = 0;
+
+  protected:
+      std::future<void> isCalcPrev;
 
   };
 }

@@ -7,33 +7,32 @@ namespace rf
   class ActorLocal : public IAbstractActor
   {
   public:
-    ActorLocal(std::string id); 
+    ActorLocal(const std::string& id); 
 
     virtual ~ActorLocal() = default;
 
-    bool Init(json) override;
+    bool Init(const json&) override;
 
     json Configuration() override;
 
     //Returns the ID of this actor.
-    std::string id() override { return _id; }
-    std::string typeId() {return  _typeId;}
+    std::string Id() override { return _id; }
+    std::string Type() {return  _type;}
     std::vector<std::shared_ptr<IPort>> GetPorts() override;
-    std::shared_ptr<IPort> GetPortById(std::string portId) override;
+    std::shared_ptr<IPort> GetPortById(const std::string& portId) override;
 
-    std::variant<bool, int, double> GetProperty(std::string) override;
+    std::variant<bool, int, double> GetProperty(const std::string &) override;
 
     json GetStatus() override;
-    virtual void onInputReceive(std::string, std::shared_ptr<IData>){};
-    bool ConnectTo(std::shared_ptr<IPort> port, std::string portId) override;
-    bool ConnectTo(std::shared_ptr<IAbstractActor> actorExternal, std::string portIdExternal, std::string portIdInternal) override;
+    virtual void OnInputReceive(const std::string&, std::shared_ptr<IData>&){};
+    bool ConnectTo(std::shared_ptr<IPort>& port, const std::string& portId) override;
+    bool ConnectTo(std::shared_ptr<IAbstractActor>& actorExternal, const std::string& portIdExternal, const std::string& portIdInternal) override;
     
-    void Disconnect(std::shared_ptr<IPort> portExternal, std::string portIdInternal) override;
+    void Disconnect(std::shared_ptr<IPort>& portExternal, const std::string& portIdInternal) override;
    
-    void Disconnect(std::string portIdExternal, std::string portIdInternal) override; 
+    void Disconnect(const std::string& portIdExternal, const std::string& portIdInternal) override; 
 
-    void DisconnectAll(std::string portIdExternal) override;
-
+    void DisconnectAll(const std::string& portIdExternal) override;
 
     bool IsActive() final {return _flagActive;}
 
@@ -43,12 +42,13 @@ namespace rf
 
   protected:
     //void Nottify();
-    std::shared_ptr<IPort> addPort(std::string typePort);
-    std::shared_ptr<IPort> addPort(json);
+    std::shared_ptr<IPort> addPort(const std::string& typePort, const std::string& portId);
+    std::shared_ptr<IPort> addPort(const std::string& typePort);
+    std::shared_ptr<IPort> addPort(const json&);
     virtual void OnActivate(){};
     virtual void OnDeactivate(){};
     std::string _id;
-    std::string _typeId;
+    std::string _type;
     std::map<std::string, std::shared_ptr<IPort>> _mapPorts;
     //Флаг активации актора
     bool _flagActive;

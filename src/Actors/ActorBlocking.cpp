@@ -7,11 +7,11 @@ using rf::IPort;
 
 using nlohmann::json;
 
-ActorBlocking::ActorBlocking(std::string id) 
+ActorBlocking::ActorBlocking(const std::string& id) 
 : ActorLocal(id)
 , minLoopTimeMks(100)
 {
-	_typeId = "ActorBlocking";
+	_type = "ActorBlocking";
 }
 
  ActorBlocking::~ActorBlocking()
@@ -20,7 +20,7 @@ ActorBlocking::ActorBlocking(std::string id)
 }
 
 
-bool ActorBlocking::Init(json actorConfig)
+bool ActorBlocking::Init(const json& actorConfig)
 {
 	try {
 		minLoopTimeMks = actorConfig["minLoopTimeMks"].get<size_t>();
@@ -32,7 +32,7 @@ bool ActorBlocking::Init(json actorConfig)
 	return false;
 }
 
-std::variant<bool, int, double> ActorBlocking::GetProperty(std::string)
+std::variant<bool, int, double> ActorBlocking::GetProperty(const std::string&)
 {
 	return std::variant<bool, int, double>();
 }

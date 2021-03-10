@@ -8,11 +8,11 @@ using rf::IPort;
 
 using nlohmann::json;
 
-ActorLocal::ActorLocal(std::string id) : _id(id), _typeId("ActorLocal")
+ActorLocal::ActorLocal(const std::string& id) : _id(id), _type("ActorLocal")
 {
 }
 
-bool ActorLocal::Init(json)
+bool ActorLocal::Init(const json& actorConfig)
 {
   return false;
 }
@@ -21,7 +21,7 @@ json ActorLocal::Configuration()
 {
    return {
      {"id",_id},
-     {"typeId",_typeId},
+     {"type",_type},
    };
 }
 
@@ -34,7 +34,7 @@ std::vector<std::shared_ptr<IPort>> ActorLocal::GetPorts()
   return ports;
 }
 
-std::variant<bool, int, double> ActorLocal::GetProperty(std::string)
+std::variant<bool, int, double> ActorLocal::GetProperty(const std::string& property)
 {
   return std::variant<bool, int, double>();
 }
@@ -51,30 +51,38 @@ json ActorLocal::GetStatus()
   return res;
 }
 
-std::shared_ptr<IPort> ActorLocal::addPort(std::string typePort)
+std::shared_ptr<IPort> ActorLocal::addPort(const std::string& typePort, const std::string& portId)
 {
-  std::string id = rf::UidGenerator::Generate(typePort);
-  std::shared_ptr<IPort> portPtr = rf::PortFactory::Create(typePort, id);
+  std::shared_ptr<IPort> portPtr = rf::PortFactory::Create(typePort, portId);
   if (portPtr)
   {
-    //portPtr->SetEveventOnReceive(std::bind(&ActorLocal::onInputReceive, this, std::placeholders::_1, std::placeholders::_2));
+    //portPtr->SetEveventOnReceive(std::bind(&ActorLocal::OnInputReceive, this, std::placeholders::_1, std::placeholders::_2));
     // std::function<void(std::string,std::shared_ptr<IData>)> functionOnRecive;
     portPtr->SetEveventOnReceive([&](std::string idPort, std::shared_ptr<IData> ptrData){
       if(this->_flagActive)
-        this->onInputReceive(idPort, ptrData );
+        this->OnInputReceive(idPort, ptrData );
     });
-    _mapPorts.emplace(std::make_pair(portPtr->id(), portPtr));
+    _mapPorts.emplace(std::make_pair(portPtr->Id(), portPtr));
   }
   return portPtr;
 }
 
-std::shared_ptr<IPort> ActorLocal::addPort(json portJson)
+
+std::shared_ptr<IPort> ActorLocal::addPort(const std::string& typePort)
+{
+  std::string portId = rf::UidGenerator::Generate(typePort);
+  return addPort(typePort, portId);
+}
+
+std::shared_ptr<IPort> ActorLocal::addPort(const json& portJson)
 {
   std::shared_ptr<IPort> port = nullptr;
   try
   {
-    std::string typePort = portJson["type"].get<std::string>();
-    port = addPort(typePort);
+    std::string typePort = portJson.at("type").get<std::string>();
+    std::string portId = portJson.at("id").get<std::string>();
+
+    port = addPort(typePort, portId);
     if (port)
       port->Init(portJson);
   }
@@ -84,7 +92,7 @@ std::shared_ptr<IPort> ActorLocal::addPort(json portJson)
   return port;
 }
 
-bool ActorLocal::ConnectTo(std::shared_ptr<IPort> portExternal, std::string portIdInternal)
+bool ActorLocal::ConnectTo(std::shared_ptr<IPort>& portExternal, const std::string& portIdInternal)
 {
   auto portInternal = GetPortById(portIdInternal);
   if (!portInternal)
@@ -96,7 +104,7 @@ bool ActorLocal::ConnectTo(std::shared_ptr<IPort> portExternal, std::string port
   return true;
 }
 
-bool ActorLocal::ConnectTo(std::shared_ptr<IAbstractActor> actorExternal, std::string portIdExternal, std::string portIdInternal)
+bool ActorLocal::ConnectTo(std::shared_ptr<IAbstractActor>& actorExternal, const std::string& portIdExternal, const std::string& portIdInternal)
 {
     auto portExternal = actorExternal->GetPortById(portIdExternal);
     if(!portExternal)
@@ -105,7 +113,7 @@ bool ActorLocal::ConnectTo(std::shared_ptr<IAbstractActor> actorExternal, std::s
     return ConnectTo(portExternal, portIdInternal);
 }
 
-void ActorLocal::Disconnect(std::shared_ptr<IPort> portExternal, std::string portIdInternal)
+void ActorLocal::Disconnect(std::shared_ptr<IPort>& portExternal, const std::string& portIdInternal)
 {
   auto portInternal = GetPortById(portIdInternal);
   if (!portInternal)
@@ -115,14 +123,14 @@ void ActorLocal::Disconnect(std::shared_ptr<IPort> portExternal, std::string por
   portExternal->Detach(portInternal);
 }
 
- void   ActorLocal::Disconnect(std::string portIdExternal, std::string portIdInternal)
+ void   ActorLocal::Disconnect(const std::string& portIdExternal, const std::string& portIdInternal)
  {
   auto portInternal = GetPortById(portIdInternal);
   if (portInternal)
       portInternal->Detach(portIdExternal);
  }
 
-void ActorLocal::DisconnectAll(std::string portIdExternal)
+void ActorLocal::DisconnectAll(const std::string& portIdExternal)
 {
   for(const auto& [portIdInternal,portInternal] : _mapPorts)
   {
@@ -131,7 +139,7 @@ void ActorLocal::DisconnectAll(std::string portIdExternal)
 }
 
 
-std::shared_ptr<IPort> ActorLocal::GetPortById(std::string portId)
+std::shared_ptr<IPort> ActorLocal::GetPortById(const std::string& portId)
 {
   auto it = _mapPorts.find(portId);
   if (it == _mapPorts.end())

@@ -13,8 +13,8 @@ namespace rf
   public:
     PortBase(std::string id);
     virtual ~PortBase() = default;
-    std::string id() override { return _id; }
-    std::string typeId() {return  _typeId;}
+    std::string Id() override { return _id; }
+    std::string Type() {return  _type;}
     virtual bool Init(json) override;
     
     void Attach(std::shared_ptr<IPort> ptrRemotePort) override{}
@@ -30,6 +30,6 @@ namespace rf
 
   protected:
     std::string _id;
-    std::string _typeId;
+    std::string _type;
   };
 }
