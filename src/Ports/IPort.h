@@ -6,6 +6,8 @@
 #include "IData.h"
 #include <memory>
 #include <functional>
+#include <set>
+#include <utility> //std::apir
 
 namespace rf
 {
@@ -18,13 +20,16 @@ class IPort
   virtual ~IPort()=default;
   virtual std::string Id()  = 0;
   virtual bool Init(json) = 0;
+  virtual json Configuration() = 0;
+  virtual json Connections() = 0;
 
   //for oututs specific
-  virtual void Attach(std::shared_ptr<IPort> ptrRemotePort) = 0;
-	virtual void Detach(std::shared_ptr<IPort> ptrRemotePort) = 0;
-  virtual void Detach(std::string remotePortId)  = 0;
+  virtual void Attach( const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort) = 0;
+	virtual void Detach( const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort) = 0;
+  virtual void Detach( const  std::string& remotePortOwnerId, const std::string& remotePortId)  = 0;
 
 	virtual void Notify(const std::shared_ptr<IData> &data) = 0;
+  virtual std::set<std::pair<std::string, std::string>>  IdentifiersOfNotifiable() =0;
 	virtual size_t NumObservers() = 0;
 	virtual void CleanObservers() = 0;
 

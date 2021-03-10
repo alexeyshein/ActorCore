@@ -14,6 +14,7 @@ namespace rf
     bool Init(const json&) override;
 
     json Configuration() override;
+    json Connections() override;
 
     //Returns the ID of this actor.
     std::string Id() override { return _id; }
@@ -25,14 +26,16 @@ namespace rf
 
     json GetStatus() override;
     virtual void OnInputReceive(const std::string&, std::shared_ptr<IData>&){};
-    bool ConnectTo(std::shared_ptr<IPort>& port, const std::string& portId) override;
-    bool ConnectTo(std::shared_ptr<IAbstractActor>& actorExternal, const std::string& portIdExternal, const std::string& portIdInternal) override;
-    
-    void Disconnect(std::shared_ptr<IPort>& portExternal, const std::string& portIdInternal) override;
    
-    void Disconnect(const std::string& portIdExternal, const std::string& portIdInternal) override; 
+    bool ConnectTo(const std::string& actorIdExternal, std::shared_ptr<IPort>& portExternal, const std::string& portIdInternal) override;
 
-    void DisconnectAll(const std::string& portIdExternal) override;
+    bool ConnectTo(std::shared_ptr<IAbstractActor>& actorExternal, const std::string& portIdExternal, const std::string& portIdInternal) override;
+
+    void Disconnect(const std::string& actorIdExternal, std::shared_ptr<IPort>& portExternal, const std::string& portIdInternal) override;
+        
+    void Disconnect(const std::string& actorIdExternal, const std::string& portIdExternal, const std::string& portIdInternal) override;
+
+    void DisconnectAll(const std::string& actorIdExternal, const std::string& portIdExternal) override;
 
     bool IsActive() final {return _flagActive;}
 

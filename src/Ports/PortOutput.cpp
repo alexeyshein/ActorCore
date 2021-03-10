@@ -18,25 +18,32 @@ bool PortOutput::Init(json)
   return true;
 }
 
-void PortOutput::Attach(std::shared_ptr<rf::IPort> ptrRemotePort)
+
+void PortOutput::Attach(const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort)
 {
-  std::size_t linkId = std::hash<std::string>{}(ptrRemotePort->Id());
+  std::size_t linkId = std::hash<std::string>{}(remotePortOwnerId+ptrRemotePort->Id());
   std::function<void(const std::shared_ptr<IData> &)> f = std::bind(&rf::IPort::Receive, ptrRemotePort.get(), std::placeholders::_1);
   publisher.Attach(linkId, f);
+  setIdentifiersOfNotifiable.emplace(std::pair<std::string,std::string>(remotePortOwnerId, ptrRemotePort->Id()));
 }
 
-void PortOutput::Detach(std::shared_ptr<IPort> ptrRemotePort)
+void PortOutput::Detach(const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort)
 {
-  this->Detach(ptrRemotePort->Id());
+  this->Detach( remotePortOwnerId, ptrRemotePort->Id());
 }
 
-void PortOutput::Detach(std::string remotePortId)
+void PortOutput::Detach(const  std::string& remotePortOwnerId, const std::string& remotePortId)
 {
-  std::size_t linkId = std::hash<std::string>{}(remotePortId);
+  std::size_t linkId = std::hash<std::string>{}(remotePortOwnerId+remotePortId);
   publisher.Detach(linkId);
+  setIdentifiersOfNotifiable.erase(std::pair<std::string,std::string>(remotePortOwnerId, remotePortId));
+  // auto it = setIdentifiersOfNotifiable.find(std::pair<std::string,std::string>(remotePortOwnerId, remotePortId));
+  // if(it!=setIdentifiersOfNotifiable.end())
+  //   it = setIdentifiersOfNotifiable.erase(it);
 }
 
 void PortOutput::Notify(const std::shared_ptr<IData> &data)
 {
   publisher.Notify(data);
 }
+

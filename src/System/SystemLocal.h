@@ -30,6 +30,8 @@ namespace rf
     bool Connect(json);
     void Disconnect(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2);
     void Disconnect(json);
+    void Activate();
+    void Deactivate();
 
   protected:
     void RemoveAllConectionsWithActor(std::shared_ptr<IAbstractActor>);

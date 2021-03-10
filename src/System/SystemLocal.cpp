@@ -58,9 +58,20 @@ json SystemLocal::Scheme()
 {
   json jsonScheme{};
   auto jsonActors = json::array();
+  auto jsonConnections = json::array();
   for(const auto& [actorId, actor]:_mapActors)
-   jsonActors.push_back(actor->Configuration());
-  jsonScheme.emplace_back(jsonActors);
+  {
+      jsonActors.emplace_back(actor->Configuration());
+      auto connections = actor->Connections();
+      //jsonConnections+=connections;
+      for(const auto &connection : connections)
+      {
+         jsonConnections.emplace_back(connection);
+      }
+      
+  }
+  jsonScheme["actors"] = jsonActors;
+  jsonScheme["connections"] = jsonConnections;
   return jsonScheme;
 }
 
@@ -188,11 +199,11 @@ void SystemLocal::Disconnect(std::string idActor1, std::string idPortActor1, std
   {
     auto port2 = actor2->GetPortById(idPortActor2);
     if (port2)
-      actor1->Disconnect(port2, idPortActor1);
+      actor1->Disconnect(idActor2, port2, idPortActor1);
 
     auto port1 = actor2->GetPortById(idPortActor2);
     if (port1)
-      actor2->Disconnect(port1, idPortActor2);
+      actor2->Disconnect(idActor1, port1, idPortActor2);
   }
 }
 
@@ -220,7 +231,18 @@ void SystemLocal::RemoveAllConectionsWithActor(std::shared_ptr<IAbstractActor> a
     actorPort->CleanObservers();
     for (auto [actorId, actor] : _mapActors)
     {
-      actor->DisconnectAll(actorPort->Id());
+      actor->DisconnectAll(actorTarget->Id(),actorPort->Id());
     }
   }
+}
+
+
+void SystemLocal::Activate()
+{
+  std::for_each(_mapActors.cbegin(), _mapActors.cend(),[](auto & recInMap){ recInMap.second->Activate(); });
+}
+
+void SystemLocal::Deactivate()
+{
+    std::for_each(_mapActors.cbegin(), _mapActors.cend(),[](auto & recInMap){ recInMap.second->Deactivate(); });
 }
