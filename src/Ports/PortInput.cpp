@@ -21,12 +21,12 @@ bool PortInput::Init(const json& config)
    if(config.at("isTrigger").is_boolean())
      isTrigger = config.at("isTrigger").get<bool>();
   // Задать размер входной очереди
-  if(config.contains("queueSize"))
-   if(config.at("queueSize").is_number_integer())
-   _queuePtrData.setMaxSize(config.at("queueSize").get<int>());
+  if(config.contains("queueMessagesSize"))
+   if(config.at("queueMessagesSize").is_number_integer())
+   _queuePtrData.setMaxSize(config.at("queueMessagesSize").get<int>());
 
-  if(config.contains("queueModeFull"))
-   if(config.at("queueModeFull").is_string())
+  if(config.contains("queueMessagesModeFull"))
+   if(config.at("queueMessagesModeFull").is_string())
    {
      std::string modeString =  config.at("isTrigger").get<std::string>();
      if(modeString.compare("Skip") == 0)
@@ -41,11 +41,11 @@ json PortInput::Configuration()
 {
   auto config = PortBase::Configuration();
   config["isTrigger"] = isTrigger;
-  config["queueSize"] =  _queuePtrData.getMaxSize();
+  config["queueMessagesSize"] =  _queuePtrData.getMaxSize();
   std::string strMode{"Skip"};
   if(_queuePtrData.getModeFull() ==  ModeQueueFull::PopOld)
     strMode = "PopOld";
-  config["queueModeFull"] = strMode;
+  config["queueMessagesModeFull"] = strMode;
   return  config;
 }
 

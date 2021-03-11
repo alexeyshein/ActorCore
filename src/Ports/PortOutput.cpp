@@ -19,9 +19,9 @@ bool PortOutput::Init(const json& config)
   if(config.contains("isAsync"))
    if(config.at("isAsync").is_boolean())
      publisher.SetAsyncMode(config.at("isAsync").get<bool>());
-  if(config.contains("queueSize"))
-   if(config.at("queueSize").is_number_integer())
-    publisher.SetAsyncQueueSize(config.at("queueSize").get<int>());
+  if(config.contains("queueNotifiersSize"))
+   if(config.at("queueNotifiersSize").is_number_integer())
+    publisher.SetAsyncQueueSize(config.at("queueNotifiersSize").get<int>());
 }
 
 json PortOutput::Configuration()
@@ -30,7 +30,7 @@ json PortOutput::Configuration()
   config["isAsync"] = publisher.IsAsyncMode();
   if(publisher.IsAsyncMode())
   {
-    config["queueSize"] =  publisher.AsyncQueueSize();
+    config["queueNotifiersSize"] =  publisher.AsyncQueueSize();
   }
   return  config;
 }
