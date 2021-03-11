@@ -10,22 +10,24 @@ ActorEventBased::ActorEventBased(const std::string& id) : ActorLocal(id)
 }
 
 
-
 bool ActorEventBased::Init(const json&)
 {
   return false;
 }
+
 
 std::variant<bool, int, double> ActorEventBased::GetProperty(const std::string&)
 {
   return std::variant<bool, int, double>();
 }
 
+
 void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<IData>& dataPtr)
 {
   if(!ApproveTask(portId, dataPtr))
     return;
 
+  const std::lock_guard<std::mutex> lock(taskMutex);
   if (isCalcPrev.valid())
      {  // If  busy then return
          //std::shared_ptr<std::vector<std::deque<rf::Point2d<double>>>>
@@ -38,7 +40,7 @@ void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<
          }
      }
 
-     isCalcPrev =   std::async(std::launch::async, &ActorEventBased::Process, this, portId, dataPtr);
+      isCalcPrev =   std::async(std::launch::async, &ActorEventBased::Process, this, portId, dataPtr);
 } 
 
 

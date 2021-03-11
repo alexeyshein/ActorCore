@@ -19,7 +19,7 @@ public:
         auto ptrData = std::make_shared< rf::IData>();
         portOut->Notify(ptrData);
         steps++;
-        std::cout <<id()<< " step : " <<steps<< std::endl;
+        //std::cout <<Id()<< " step : " <<steps<< std::endl;
         return true;
     }
     size_t steps;

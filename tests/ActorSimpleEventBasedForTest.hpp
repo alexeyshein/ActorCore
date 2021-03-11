@@ -14,15 +14,19 @@ public:
         portInput = addPort(std::string("Input"));
         portOut = addPort(std::string("Output"));
     }
-    void OnInputReceive(std::string idPort, std::shared_ptr<rf::IData> data) override
+
+
+protected:
+    void Process(const std::string& idPort, std::shared_ptr<rf::IData>& data) override
     {
         steps++;
         //std::cout <<idPort<<"->"<<id()<<" onRecive : "<<steps<< std::endl;
         portOut->Notify(data);
     }
 
+    
+public:
     std::shared_ptr<rf::IPort> portInput;
     std::shared_ptr<rf::IPort> portOut;
     size_t steps;
-
 };

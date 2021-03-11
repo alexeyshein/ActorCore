@@ -27,6 +27,7 @@ namespace rf
 
   protected:
       std::future<void> isCalcPrev;
+      std::mutex taskMutex;
 
   };
 }

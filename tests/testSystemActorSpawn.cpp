@@ -39,9 +39,9 @@ TEST_CASE("Actors are Spawned  By System", "")
         REQUIRE(system.countActors() == 0); //
         REQUIRE(system.Attach(actor));
         REQUIRE(system.countActors() == 1); //
-        auto detached = system.Detach(actor->id());
+        auto detached = system.Detach(actor->Id());
         REQUIRE(detached);
-        REQUIRE(detached->id() == actor->id());
+        REQUIRE(detached->Id() == actor->Id());
         REQUIRE(system.countActors() == 0); //
     }
 
