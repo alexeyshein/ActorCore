@@ -14,7 +14,8 @@ namespace rf
     PortOutput(std::string id);
     virtual ~PortOutput() = default;
 
-    virtual bool Init(json) override;
+    bool Init(const json&) override;
+    json Configuration() override;
 
     void Attach( const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort) override;
 	  void Detach( const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort) override;

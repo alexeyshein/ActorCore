@@ -13,7 +13,8 @@ class PortInput: public virtual PortBase
 
   virtual ~PortInput()=default;
 
-  virtual bool Init(json) override;
+  bool Init(const json&) override;
+  json Configuration() override;
 
   void Receive(std::shared_ptr<IData> data) override;
   void SetEveventOnReceive(std::function<void(std::string,std::shared_ptr<IData>)>)  override;

@@ -1,33 +1,36 @@
 #pragma once
 
 #include <future>
-
 #include "ActorLocal.h"
+#include "SharedQueue.hpp"
 
 namespace rf
 {
   class ActorEventBased : public ActorLocal
   {
   public:
-    ActorEventBased(const std::string& id);
+    ActorEventBased(const std::string &id);
 
     virtual ~ActorEventBased() = default;
 
-    bool Init(const json&) override;
+    bool Init(const json &) override;
 
-    std::variant<bool, int, double> GetProperty(const std::string&) override;
-    
-    virtual void OnInputReceive(const std::string&, std::shared_ptr<IData>&) final;
+    json Configuration() override;
 
-  protected:
-   
-   virtual bool ApproveTask(const std::string&, std::shared_ptr<IData>&) {return true;};
+    std::variant<bool, int, double> GetProperty(const std::string &) override;
 
-   virtual void Process(const std::string& portId, std::shared_ptr<IData>& dataPtr) = 0;
+    virtual void OnInputReceive(const std::string &, std::shared_ptr<IData> &) final;
 
   protected:
-      std::future<void> isCalcPrev;
-      std::mutex taskMutex;
+    virtual bool ApproveTask(const std::string &, std::shared_ptr<IData> &) { return true; };
 
+    virtual void Process(const std::string &portId, std::shared_ptr<IData> &dataPtr) = 0;
+
+  private:
+    void SanitizeQueue();
+
+  protected:
+    SharedQueue<std::future<void>> myFutureQueue;
+    bool isAsync;
   };
 }

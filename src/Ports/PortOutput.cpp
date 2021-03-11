@@ -2,6 +2,7 @@
 #include <unordered_map> //std::hash<std::string>
 
 using rf::PortOutput;
+using nlohmann::json;
 
 PortOutput::PortOutput(std::string id)
     : rf::PortBase(id)
@@ -11,11 +12,27 @@ PortOutput::PortOutput(std::string id)
   publisher.SetAsyncQueueSize(0);
 }
 
-bool PortOutput::Init(json)
+bool PortOutput::Init(const json& config)
 {
-  // AsyncMode
-  // AsyncQueueSize
-  return true;
+  if(!PortBase::Init(config))
+   return false;
+  if(config.contains("isAsync"))
+   if(config.at("isAsync").is_boolean())
+     publisher.SetAsyncMode(config.at("isAsync").get<bool>());
+  if(config.contains("queueSize"))
+   if(config.at("queueSize").is_number_integer())
+    publisher.SetAsyncQueueSize(config.at("queueSize").get<int>());
+}
+
+json PortOutput::Configuration()
+{
+  auto config = PortBase::Configuration();
+  config["isAsync"] = publisher.IsAsyncMode();
+  if(publisher.IsAsyncMode())
+  {
+    config["queueSize"] =  publisher.AsyncQueueSize();
+  }
+  return  config;
 }
 
 

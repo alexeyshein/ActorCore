@@ -33,6 +33,7 @@ namespace rf
         void setMaxSize(size_t maxSize);
         size_t getMaxSize(){return maxSize;}
         void setModeFull(ModeQueueFull);
+        ModeQueueFull getModeFull(){return modeFull;}
         void clear();
 
         int  size();

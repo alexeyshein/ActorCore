@@ -29,9 +29,9 @@ json PortBase::Connections()
     return connections;
 }
 
-bool PortBase::Init(json) 
+bool PortBase::Init(const json&) 
 {
-    return false;
+    return true;
 }
 
 

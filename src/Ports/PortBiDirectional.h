@@ -14,7 +14,9 @@ class PortBiDirectional:public PortInput , public PortOutput
 
   virtual ~PortBiDirectional()=default;
 
-  virtual bool Init(json) override;
+  bool Init(const json&) override;
+  
+  json Configuration() override;
 
 };
 }

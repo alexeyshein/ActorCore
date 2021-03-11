@@ -19,7 +19,7 @@ class IPort
   //IPort(IAbstractActor *owner)
   virtual ~IPort()=default;
   virtual std::string Id()  = 0;
-  virtual bool Init(json) = 0;
+  virtual bool Init(const json&) = 0;
   virtual json Configuration() = 0;
   virtual json Connections() = 0;
 

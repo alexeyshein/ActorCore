@@ -15,7 +15,7 @@ namespace rf
     virtual ~PortBase() = default;
     std::string Id() override { return _id; }
     std::string Type() {return  _type;}
-    bool Init(json) override;
+    bool Init(const json&) override;
     json Configuration() override;
     json Connections() override;
 
