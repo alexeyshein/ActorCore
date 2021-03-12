@@ -20,16 +20,16 @@ ActorBlocking::ActorBlocking(const std::string& id)
 }
 
 
-bool ActorBlocking::Init(const json& actorConfig)
+bool ActorBlocking::Init(const json& config)
 {
-	try {
-		minLoopTimeMks = actorConfig["minLoopTimeMks"].get<size_t>();
-	}
-	catch (json::parse_error& e) {
-		std::cout << "Json Config for ActorBlocking don`t contain ""minLoopTimeMks"" value" << e.what();
+	if(!ActorLocal::Init(config))
 		return false;
-	}//try...
-	return false;
+	
+	if(config.contains("minLoopTimeMks"))
+     if(config.at("minLoopTimeMks").is_number())
+      minLoopTimeMks = config.at("minLoopTimeMks").get<size_t>();
+
+	return true;
 }
 
 std::variant<bool, int, double> ActorBlocking::GetProperty(const std::string&)

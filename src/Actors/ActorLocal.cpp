@@ -14,7 +14,7 @@ ActorLocal::ActorLocal(const std::string &id) : _id(id), _type("ActorLocal")
 
 bool ActorLocal::Init(const json &actorConfig)
 {
-  return false;
+  return true;
 }
 
 json ActorLocal::Configuration()

@@ -25,6 +25,8 @@ bool ActorEventBased::Init(const json& config)
   if(config.contains("queueSize"))
    if(config.at("queueSize").is_number_integer())
     myFutureQueue.setMaxSize(config.at("queueSize").get<int>());
+  
+  return true;
 }
 
 json ActorEventBased::Configuration()
