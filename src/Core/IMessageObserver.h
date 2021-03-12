@@ -1,18 +1,18 @@
 #pragma once
 #include <cstddef> //size_t
 #include <memory>
-/*! \class IDataPublisher Паттерн Observer
+/*! \class IMessagePublisher Паттерн Observer
 \brief  Интерфейс оповещения видеоинформацией от одного канала видео  всех подписчиков
 
 */
 namespace rf
 {
-struct IData;
-class IDataObserver
+struct IMessage;
+class IMessageObserver
 {
 public:
   
-  virtual ~IDataObserver()=default;
-  virtual void Update(const std::shared_ptr<IData>)=0;
+  virtual ~IMessageObserver()=default;
+  virtual void Update(const std::shared_ptr<IMessage>)=0;
 };
 };

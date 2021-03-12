@@ -1,9 +1,9 @@
 #pragma once
 
 #include "PortBase.h"
-#include "IData.h"
+#include "IMessage.h"
 #include "IAbstractActor.h"
-#include "DataPublisherFunctor.hpp"
+#include "MessagePublisherFunctor.hpp"
 #include <memory>
 
 namespace rf
@@ -21,7 +21,7 @@ namespace rf
 	  void Detach( const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort) override;
     void Detach( const  std::string& remotePortOwnerId, const std::string& remotePortId)  override;
     
-	  void Notify(const std::shared_ptr<IData> &data) override;
+	  void Notify(const std::shared_ptr<IMessage> &data) override;
     std::set<std::pair<std::string, std::string>>  IdentifiersOfNotifiable() override {return setIdentifiersOfNotifiable;}
     size_t NumObservers() override {return publisher.NumObservers();} 
 	  void CleanObservers() override {publisher.CleanObservers();} 
@@ -32,7 +32,7 @@ namespace rf
 	  size_t AsyncQueueSize() {return publisher.AsyncQueueSize();}
   
   protected:
-    rf::DataPublisherFunctor<std::shared_ptr<IData>> publisher;
+    rf::MessagePublisherFunctor<std::shared_ptr<IMessage>> publisher;
     //Needs only for information matters
     std::set<std::pair<std::string, std::string>>  setIdentifiersOfNotifiable;
   };

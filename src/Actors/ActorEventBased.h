@@ -19,12 +19,12 @@ namespace rf
 
     std::variant<bool, int, double> GetProperty(const std::string &) override;
 
-    virtual void OnInputReceive(const std::string &, std::shared_ptr<IData> &) final;
+    virtual void OnInputReceive(const std::string &, std::shared_ptr<IMessage> &) final;
 
   protected:
-    virtual bool ApproveTask(const std::string &, std::shared_ptr<IData> &) { return true; };
+    virtual bool ApproveTask(const std::string &, std::shared_ptr<IMessage> &) { return true; };
 
-    virtual void Process(const std::string &portId, std::shared_ptr<IData> &dataPtr) = 0;
+    virtual void Process(const std::string &portId, std::shared_ptr<IMessage> &dataPtr) = 0;
 
   private:
     void SanitizeQueue();

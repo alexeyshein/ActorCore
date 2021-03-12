@@ -39,7 +39,7 @@ json PortOutput::Configuration()
 void PortOutput::Attach(const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort)
 {
   std::size_t linkId = std::hash<std::string>{}(remotePortOwnerId+ptrRemotePort->Id());
-  std::function<void(const std::shared_ptr<IData> &)> f = std::bind(&rf::IPort::Receive, ptrRemotePort.get(), std::placeholders::_1);
+  std::function<void(const std::shared_ptr<IMessage> &)> f = std::bind(&rf::IPort::Receive, ptrRemotePort.get(), std::placeholders::_1);
   publisher.Attach(linkId, f);
   setIdentifiersOfNotifiable.emplace(std::pair<std::string,std::string>(remotePortOwnerId, ptrRemotePort->Id()));
 }
@@ -59,7 +59,7 @@ void PortOutput::Detach(const  std::string& remotePortOwnerId, const std::string
   //   it = setIdentifiersOfNotifiable.erase(it);
 }
 
-void PortOutput::Notify(const std::shared_ptr<IData> &data)
+void PortOutput::Notify(const std::shared_ptr<IMessage> &data)
 {
   publisher.Notify(data);
 }

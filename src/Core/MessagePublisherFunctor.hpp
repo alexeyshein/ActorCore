@@ -17,16 +17,16 @@
 
 namespace rf
 {
-//struct IData;
+//struct IMessage;
 template<class T>
 using Callback = std::function<void(const T&)>;
 
 template<class T>
-class DataPublisherFunctor //:	public IDataPublisher
+class MessagePublisherFunctor //:	public IMessagePublisher
 {
 public:
-	DataPublisherFunctor();
-	~DataPublisherFunctor();
+	MessagePublisherFunctor();
+	~MessagePublisherFunctor();
 	void Attach(std::size_t linkId, Callback<T>);
 	void Detach(std::size_t linkId);
 	void Notify(const T&);
@@ -50,7 +50,7 @@ protected:
 
 
 template<class T>
-DataPublisherFunctor<T>::DataPublisherFunctor() 
+MessagePublisherFunctor<T>::MessagePublisherFunctor() 
 :  _myFutureQueue(255, ModeQueueFull::Nothing)
 ,  _isAsync(true)
 {
@@ -58,13 +58,13 @@ DataPublisherFunctor<T>::DataPublisherFunctor()
 }
 
 template<class T>
-DataPublisherFunctor<T>::~DataPublisherFunctor()
+MessagePublisherFunctor<T>::~MessagePublisherFunctor()
 {
 }
 
 //Подключение наблюдателя
 template<class T>
-void DataPublisherFunctor<T>::Attach(std::size_t linkId, Callback<T> subscriberCandidate)
+void MessagePublisherFunctor<T>::Attach(std::size_t linkId, Callback<T> subscriberCandidate)
 {
 	std::lock_guard<std::mutex> mlock(_mutex);
 	auto search  = _mapCallbacks.find(linkId);
@@ -76,7 +76,7 @@ void DataPublisherFunctor<T>::Attach(std::size_t linkId, Callback<T> subscriberC
 
 //Отключение наблюдателя
 template<class T>
-void DataPublisherFunctor<T>::Detach(std::size_t linkId)
+void MessagePublisherFunctor<T>::Detach(std::size_t linkId)
 {
 	// Удаляем все ссылки на processingChannel
 	std::lock_guard<std::mutex> mlock(_mutex);
@@ -85,7 +85,7 @@ void DataPublisherFunctor<T>::Detach(std::size_t linkId)
 
 //Оповещение наблюдателя
 template<class T>
-void DataPublisherFunctor<T>::Notify(const T& data)
+void MessagePublisherFunctor<T>::Notify(const T& data)
 {
 	std::lock_guard<std::mutex> mlock(_mutex);
 	SanitizeQueue();
@@ -110,21 +110,21 @@ void DataPublisherFunctor<T>::Notify(const T& data)
 }
 
 template<class T>
-size_t DataPublisherFunctor<T>::NumObservers()
+size_t MessagePublisherFunctor<T>::NumObservers()
 {
 	//std::lock_guard<std::mutex> mlock(_mutex);
 	return _mapCallbacks.size();
 }
 
 template<class T>
-void DataPublisherFunctor<T>::CleanObservers()
+void MessagePublisherFunctor<T>::CleanObservers()
 {
 	std::lock_guard<std::mutex> mlock(_mutex);
 	_mapCallbacks.clear();
 }
 
 template<class T>
-void DataPublisherFunctor<T>::SanitizeQueue()
+void MessagePublisherFunctor<T>::SanitizeQueue()
 {
 	bool ready = true;
 	while (ready)

@@ -1,5 +1,5 @@
 #pragma once
-#include "IDataPublisher.h"
+#include "IMessagePublisher.h"
 #include "SharedQueue.hpp"
 #include <memory>
 #include <vector>
@@ -15,17 +15,17 @@
 
 namespace rf
 {
-struct IData;
+struct IMessage;
 
-class DataPublisher :
-	public IDataPublisher
+class MessagePublisher :
+	public IMessagePublisher
 {
 public:
-	DataPublisher();
-	~DataPublisher() override;
-	void Attach(IDataObserver* ) override;
-	void Detach(IDataObserver* ) override;
-	void Notify(const std::shared_ptr<IData>) override;
+	MessagePublisher();
+	~MessagePublisher() override;
+	void Attach(IMessageObserver* ) override;
+	void Detach(IMessageObserver* ) override;
+	void Notify(const std::shared_ptr<IMessage>) override;
 	size_t NumObservers() override;
 	void CleanObservers() override;
 protected:
@@ -33,7 +33,7 @@ protected:
 protected:
     //TODO защитить вектор мъютексами для одновременного использования из разных потоков
 	//Список наблюдателей
-	std::vector< IDataObserver*> subscribers;
+	std::vector< IMessageObserver*> subscribers;
 	SharedQueue<std::future<void>> myFutureQueue;
 	std::mutex mutex_; //Защита от изменения количества подписчиков
 };

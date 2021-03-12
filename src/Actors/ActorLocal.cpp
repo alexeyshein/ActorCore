@@ -77,8 +77,8 @@ std::shared_ptr<IPort> ActorLocal::addPort(const std::string &typePort, const st
   if (portPtr)
   {
     //portPtr->SetEveventOnReceive(std::bind(&ActorLocal::OnInputReceive, this, std::placeholders::_1, std::placeholders::_2));
-    // std::function<void(std::string,std::shared_ptr<IData>)> functionOnRecive;
-    portPtr->SetEveventOnReceive([&](std::string idPort, std::shared_ptr<IData> ptrData) {
+    // std::function<void(std::string,std::shared_ptr<IMessage>)> functionOnRecive;
+    portPtr->SetEveventOnReceive([&](std::string idPort, std::shared_ptr<IMessage> ptrData) {
       if (this->_flagActive)
         this->OnInputReceive(idPort, ptrData);
     });

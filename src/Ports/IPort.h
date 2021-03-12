@@ -3,7 +3,7 @@
 //A port is an object that is used to establish a connection between a node
 
 #include "json.hpp"
-#include "IData.h"
+#include "IMessage.h"
 #include <memory>
 #include <functional>
 #include <set>
@@ -28,14 +28,14 @@ class IPort
 	virtual void Detach( const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort) = 0;
   virtual void Detach( const  std::string& remotePortOwnerId, const std::string& remotePortId)  = 0;
 
-	virtual void Notify(const std::shared_ptr<IData> &data) = 0;
+	virtual void Notify(const std::shared_ptr<IMessage> &data) = 0;
   virtual std::set<std::pair<std::string, std::string>>  IdentifiersOfNotifiable() =0;
 	virtual size_t NumObservers() = 0;
 	virtual void CleanObservers() = 0;
 
   //for inputs specific
-  virtual void Receive(std::shared_ptr<IData> data) = 0;
-  virtual void SetEveventOnReceive(std::function<void(std::string,std::shared_ptr<IData>)>) = 0;
+  virtual void Receive(std::shared_ptr<IMessage> data) = 0;
+  virtual void SetEveventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)>) = 0;
 };
 }
 

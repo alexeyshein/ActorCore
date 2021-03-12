@@ -16,7 +16,7 @@ public:
     }
     bool Process() override
     {
-        auto ptrData = std::make_shared< rf::IData>();
+        auto ptrData = std::make_shared< rf::IMessage>();
         portOut->Notify(ptrData);
         steps++;
         //std::cout <<Id()<< " step : " <<steps<< std::endl;

@@ -49,14 +49,14 @@ json PortInput::Configuration()
   return  config;
 }
 
-void PortInput::Receive(std::shared_ptr<IData> dataPtr)
+void PortInput::Receive(std::shared_ptr<IMessage> dataPtr)
 {
    _queuePtrData.push_back(dataPtr);
    if(isTrigger && functionOnRecive)
      functionOnRecive(_id, dataPtr);
 }
 
-void PortInput::SetEveventOnReceive(std::function<void(std::string,std::shared_ptr<IData>)> func)
+void PortInput::SetEveventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)> func)
 {
    functionOnRecive = func;
 }

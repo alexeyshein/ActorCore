@@ -25,7 +25,7 @@ namespace rf
     std::variant<bool, int, double> GetProperty(const std::string &) override;
 
     json GetStatus() override;
-    virtual void OnInputReceive(const std::string&, std::shared_ptr<IData>&){};
+    virtual void OnInputReceive(const std::string&, std::shared_ptr<IMessage>&){};
    
     bool ConnectTo(const std::string& actorIdExternal, std::shared_ptr<IPort>& portExternal, const std::string& portIdInternal) override;
 

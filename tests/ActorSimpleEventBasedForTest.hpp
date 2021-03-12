@@ -17,7 +17,7 @@ public:
 
 
 protected:
-    void Process(const std::string& idPort, std::shared_ptr<rf::IData>& data) override
+    void Process(const std::string& idPort, std::shared_ptr<rf::IMessage>& data) override
     {
         steps++;
         //std::cout <<idPort<<"->"<<id()<<" onRecive : "<<steps<< std::endl;

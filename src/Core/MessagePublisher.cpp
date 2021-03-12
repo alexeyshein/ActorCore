@@ -1,24 +1,24 @@
-#include "DataPublisher.h"
+#include "MessagePublisher.h"
 
 #include <iostream>
 #include <algorithm>
 #include <future>
-#include "IDataObserver.h"
+#include "IMessageObserver.h"
 
-using rf::DataPublisher;
-using rf::IDataObserver;
+using rf::MessagePublisher;
+using rf::IMessageObserver;
 
-DataPublisher::DataPublisher() : myFutureQueue(255, ModeQueueFull::Nothing)
+MessagePublisher::MessagePublisher() : myFutureQueue(255, ModeQueueFull::Nothing)
 {
 	//myFutureQueue.setModeFull(ModeQueueFull::Nothing);
 }
 
-DataPublisher::~DataPublisher()
+MessagePublisher::~MessagePublisher()
 {
 }
 
 //Подключение наблюдателя
-void DataPublisher::Attach(IDataObserver *subscriberCandidate)
+void MessagePublisher::Attach(IMessageObserver *subscriberCandidate)
 {
 	//Поиск, есть ли этот наблюдатель в списке
 	std::lock_guard<std::mutex> mlock(mutex_);
@@ -35,7 +35,7 @@ void DataPublisher::Attach(IDataObserver *subscriberCandidate)
 }
 
 //Отключение наблюдателя
-void DataPublisher::Detach(IDataObserver *subscriberCandidate)
+void MessagePublisher::Detach(IMessageObserver *subscriberCandidate)
 {
 	// Удаляем все ссылки на processingChannel
 	std::lock_guard<std::mutex> mlock(mutex_);
@@ -45,7 +45,7 @@ void DataPublisher::Detach(IDataObserver *subscriberCandidate)
 }
 
 //Оповещение наблюдателя
-void DataPublisher::Notify(const std::shared_ptr<IData> framePtr)
+void MessagePublisher::Notify(const std::shared_ptr<IMessage> framePtr)
 {
 	std::lock_guard<std::mutex> mlock(mutex_);
 	SanitizeQueue();
@@ -53,24 +53,24 @@ void DataPublisher::Notify(const std::shared_ptr<IData> framePtr)
 	{
 		//Если  myFutureQueue заполняется до MaxQueue, то выполнение future не помещается в очередь, а ожидается до выхода из данной функции
 		myFutureQueue.emplace_back(std::async(
-			std::launch::async, [](IDataObserver *subscriber, const std::shared_ptr<IData> framePtr) { subscriber->Update(framePtr); },
+			std::launch::async, [](IMessageObserver *subscriber, const std::shared_ptr<IMessage> framePtr) { subscriber->Update(framePtr); },
 			subscriber, framePtr));
 	}
 }
 
-size_t DataPublisher::NumObservers()
+size_t MessagePublisher::NumObservers()
 {
 	//std::lock_guard<std::mutex> mlock(mutex_);
 	return subscribers.size();
 }
 
-void DataPublisher::CleanObservers()
+void MessagePublisher::CleanObservers()
 {
 	std::lock_guard<std::mutex> mlock(mutex_);
 	subscribers.clear();
 }
 
-void DataPublisher::SanitizeQueue()
+void MessagePublisher::SanitizeQueue()
 {
 	bool ready = true;
 	while (ready)

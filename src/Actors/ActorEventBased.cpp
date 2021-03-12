@@ -46,7 +46,7 @@ std::variant<bool, int, double> ActorEventBased::GetProperty(const std::string&)
 }
 
 
-void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<IData>& dataPtr)
+void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<IMessage>& dataPtr)
 {
   if(!ApproveTask(portId, dataPtr))
     return;

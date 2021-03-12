@@ -1,12 +1,12 @@
 #include "catch.hpp"
 
-#include <DataPublisherFunctor.hpp>
+#include "MessagePublisherFunctor.hpp"
 #include <string>
 
    struct DataShare
    {
-         rf::DataPublisherFunctor<std::string> publisher1;
-         rf::DataPublisherFunctor<std::string> publisher2;
+         rf::MessagePublisherFunctor<std::string> publisher1;
+         rf::MessagePublisherFunctor<std::string> publisher2;
    };
 
    template<class T>
@@ -19,7 +19,7 @@
    };
 
 
-TEST_CASE( "DataPublisherFunctor", "[std::string]" ) {
+TEST_CASE( "MessagePublisherFunctor", "[std::string]" ) {
 
    
    DataShare  share;
