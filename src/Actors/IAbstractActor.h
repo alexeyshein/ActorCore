@@ -9,23 +9,17 @@
 
 namespace rf
 {
-  class IAbstractActor
+  class IAbstractActor:public virtual IUnit
   {
   public:
     virtual ~IAbstractActor() = default;
 
-    virtual bool Init(const json&) = 0;
-
-    virtual json Configuration() = 0;
     virtual json Connections() = 0;
     //Returns the ID of this actor.
-    virtual std::string Id() = 0;
 
     virtual std::vector<std::shared_ptr<IPort>> GetPorts() = 0;
 
     virtual std::shared_ptr<IPort> GetPortById(const std::string&) = 0;
-
-    virtual std::variant<bool, int, double> GetProperty(const std::string&) = 0;
 
     virtual bool ConnectTo(const std::string& actorIdExternal, std::shared_ptr<IPort>& portExternal, const std::string& portIdInternal) = 0;
 

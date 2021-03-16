@@ -15,6 +15,11 @@ class PortInput: public virtual PortBase
 
   bool Init(const json&) override;
   json Configuration() override;
+  
+  std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string&) override;
+  bool SetProperty(const std::string&, bool) override;
+  bool SetProperty(const std::string&, int) override;
+  bool SetProperty(const std::string&, std::string) override;
 
   void Receive(std::shared_ptr<IMessage> data) override;
   void SetEveventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)>)  override;

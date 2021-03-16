@@ -8,19 +8,18 @@
 #include <functional>
 #include <set>
 #include <utility> //std::apir
+#include <variant>
+#include "IUnit.h"
 
 namespace rf
 {
 using json =  nlohmann::json;
 
-class IPort
+class IPort:public virtual IUnit
 {
   public:
   //IPort(IAbstractActor *owner)
   virtual ~IPort()=default;
-  virtual std::string Id()  = 0;
-  virtual bool Init(const json&) = 0;
-  virtual json Configuration() = 0;
   virtual json Connections() = 0;
 
   //for oututs specific

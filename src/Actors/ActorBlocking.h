@@ -14,8 +14,8 @@ namespace rf
          //~ActorBlocking() = default;
 		bool Init(const json&) override;
 
-		std::variant<bool, int, double> GetProperty(const std::string&) override;
-
+    	std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string &) override ;
+    	bool SetProperty(const std::string&, int) override ;
 
 	   json GetStatus() override;
 

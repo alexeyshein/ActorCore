@@ -40,10 +40,35 @@ json ActorEventBased::Configuration()
   return  config;
 }
 
-std::variant<bool, int, double> ActorEventBased::GetProperty(const std::string&)
-{
-  return std::variant<bool, int, double>();
+std::variant<std::monostate, bool, int, double, std::string> ActorEventBased::GetProperty(const std::string &propertyName) 
+{ 
+  if(propertyName.compare("isAsync") == 0)
+    return isAsync;
+  else if(propertyName.compare("queueSize") == 0)
+    return static_cast<int>(myFutureQueue.getMaxSize());
+  return ActorLocal::GetProperty(propertyName);
 }
+
+bool ActorEventBased::SetProperty(const std::string& propertyName, bool value) 
+{
+    if(propertyName.compare("isAsync"))
+    {
+      isAsync = value;
+      return true;
+    }
+  return ActorLocal::SetProperty(propertyName, value);
+}
+
+bool ActorEventBased::SetProperty(const std::string& propertyName, int value) 
+{
+  if(propertyName.compare("queueSize"))
+    {
+      myFutureQueue.setMaxSize(value);
+      return true;
+    }
+  return ActorLocal::SetProperty(propertyName, value);
+}
+
 
 
 void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<IMessage>& dataPtr)

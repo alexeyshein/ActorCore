@@ -10,20 +10,16 @@ namespace rf
   {
   public:
     ActorEventBased(const std::string &id);
-
     virtual ~ActorEventBased() = default;
-
     bool Init(const json &) override;
-
     json Configuration() override;
-
-    std::variant<bool, int, double> GetProperty(const std::string &) override;
-
+    std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string &) override ;
+    bool SetProperty(const std::string&, bool) override ;
+    bool SetProperty(const std::string&, int) override ;
     virtual void OnInputReceive(const std::string &, std::shared_ptr<IMessage> &) final;
 
   protected:
     virtual bool ApproveTask(const std::string &, std::shared_ptr<IMessage> &) { return true; };
-
     virtual void Process(const std::string &portId, std::shared_ptr<IMessage> &dataPtr) = 0;
 
   private:

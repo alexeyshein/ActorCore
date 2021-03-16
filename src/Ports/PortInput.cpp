@@ -28,7 +28,7 @@ bool PortInput::Init(const json& config)
   if(config.contains("queueMessagesModeFull"))
    if(config.at("queueMessagesModeFull").is_string())
    {
-     std::string modeString =  config.at("isTrigger").get<std::string>();
+     std::string modeString =  config.at("queueMessagesModeFull").get<std::string>();
      if(modeString.compare("Skip") == 0)
         _queuePtrData.setModeFull(ModeQueueFull::Nothing);
       else if(modeString.compare("PopOld") == 0)
@@ -48,6 +48,57 @@ json PortInput::Configuration()
   config["queueMessagesModeFull"] = strMode;
   return  config;
 }
+
+std::variant<std::monostate, bool, int, double, std::string> PortInput::GetProperty(const std::string& propertyName)
+{
+  if(propertyName.compare("isTrigger") == 0)
+    return isTrigger;
+  else if(propertyName.compare("queueMessagesSize") == 0)
+    return static_cast<int>(_queuePtrData.getMaxSize());
+  else if(propertyName.compare("queueMessagesModeFull") == 0)
+  {
+      std::string strMode{"Skip"};
+        if(_queuePtrData.getModeFull() ==  ModeQueueFull::PopOld)
+          strMode = "PopOld";
+      return strMode;
+  }
+  return PortBase::GetProperty(propertyName);
+}
+
+
+bool PortInput::SetProperty(const std::string& propertyName, bool value) 
+{
+  if(propertyName.compare("isTrigger"))
+    {
+      isTrigger = value;
+      return true;
+    }
+  return PortBase::SetProperty(propertyName, value);
+}
+
+bool  PortInput::SetProperty(const std::string& propertyName, int value)
+{
+  if(propertyName.compare("queueMessagesSize"))
+    {
+      _queuePtrData.setMaxSize(value);
+      return true;
+    }
+   return PortBase::SetProperty(propertyName, value);
+}
+
+bool PortInput::SetProperty(const std::string& propertyName, std::string value) 
+{
+  if(propertyName.compare("queueMessagesModeFull"))
+    {
+      if(value.compare("Skip") == 0)
+        _queuePtrData.setModeFull(ModeQueueFull::Nothing);
+      else if(value.compare("PopOld") == 0)
+        _queuePtrData.setModeFull(ModeQueueFull::PopOld);
+      return true;
+    }
+   return PortBase::SetProperty(propertyName, value);
+}
+
 
 void PortInput::Receive(std::shared_ptr<IMessage> dataPtr)
 {

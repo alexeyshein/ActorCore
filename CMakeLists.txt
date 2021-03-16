@@ -4,8 +4,8 @@ project (ActorCoreSolution)
 
 # Optional  components
 # ===================================================
-option(WITH_${PROJECT_NAME}_Samples "Include CoreInterchange Samples" OFF)
-option(WITH_${PROJECT_NAME}_Tests  "Include CoreInterchange Unit Tests" OFF)
+option(WITH_${PROJECT_NAME}_Samples "Include CoreInterchange Samples" ON)
+option(WITH_${PROJECT_NAME}_Tests  "Include CoreInterchange Unit Tests" ON)
 
 add_subdirectory (3rdParty)
 add_subdirectory (src)

@@ -54,10 +54,7 @@ std::vector<std::shared_ptr<IPort>> ActorLocal::GetPorts()
   return ports;
 }
 
-std::variant<bool, int, double> ActorLocal::GetProperty(const std::string &property)
-{
-  return std::variant<bool, int, double>();
-}
+
 
 json ActorLocal::GetStatus()
 {

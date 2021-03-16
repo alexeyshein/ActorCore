@@ -32,11 +32,22 @@ bool ActorBlocking::Init(const json& config)
 	return true;
 }
 
-std::variant<bool, int, double> ActorBlocking::GetProperty(const std::string&)
+std::variant<std::monostate, bool, int, double, std::string> ActorBlocking::GetProperty(const std::string& propertyName)
 {
-	return std::variant<bool, int, double>();
+  if(propertyName.compare("minLoopTimeMks") == 0)
+    return static_cast<int>(minLoopTimeMks);
+  return ActorLocal::GetProperty(propertyName);
 }
 
+bool ActorBlocking::SetProperty(const std::string& propertyName, int value) 
+{
+    if(propertyName.compare("minLoopTimeMks"))
+    {
+      minLoopTimeMks = value ;
+      return true;
+    }
+  return ActorLocal::SetProperty(propertyName, value);
+}
 
 void ActorBlocking::OnActivate()
 {

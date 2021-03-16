@@ -14,10 +14,18 @@ namespace rf
     PortBase(std::string id);
     virtual ~PortBase() = default;
     std::string Id() override { return _id; }
-    std::string Type() {return  _type;}
+    std::string Type() override {return  _type;}
     bool Init(const json&) override;
     json Configuration() override;
+    IUnit* Parent() override {return nullptr;}
+    virtual std::vector<IUnit*> Children() override {return std::vector<IUnit*>();}
+
     json Connections() override;
+    std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string&) override {return std::monostate{};};
+    bool SetProperty(const std::string&, bool) override { return true; }
+    bool SetProperty(const std::string&, int) override { return true; }
+    bool SetProperty(const std::string&, double) override { return true; }
+    bool SetProperty(const std::string&, std::string) override { return true; }
 
     void Attach( const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort) override{}
 	  void Detach( const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort) override{}

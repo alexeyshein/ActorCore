@@ -35,6 +35,35 @@ json PortOutput::Configuration()
   return  config;
 }
 
+std::variant<std::monostate, bool, int, double, std::string> PortOutput::GetProperty(const std::string& propertyName)
+{
+  if(propertyName.compare("isAsync") == 0)
+    return publisher.IsAsyncMode();
+  else if(propertyName.compare("queueNotifiersSize") == 0)
+    return static_cast<int>(publisher.AsyncQueueSize());
+  return PortBase::GetProperty(propertyName);
+}
+
+
+bool PortOutput::SetProperty(const std::string& propertyName, bool value) 
+{
+  if(propertyName.compare("isAsync"))
+    {
+      publisher.SetAsyncMode(value);
+      return true;
+    }
+  return PortBase::SetProperty(propertyName, value);
+}
+
+bool  PortOutput::SetProperty(const std::string& propertyName, int value)
+{
+  if(propertyName.compare("queueNotifiersSize"))
+    {
+       publisher.SetAsyncQueueSize(value);
+      return true;
+    }
+   return PortBase::SetProperty(propertyName, value);
+}
 
 void PortOutput::Attach(const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort)
 {

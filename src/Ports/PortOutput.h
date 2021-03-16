@@ -17,6 +17,10 @@ namespace rf
     bool Init(const json&) override;
     json Configuration() override;
 
+    std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string&) override;
+    bool SetProperty(const std::string&, bool) override;
+    bool SetProperty(const std::string&, int) override;
+
     void Attach( const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort) override;
 	  void Detach( const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort) override;
     void Detach( const  std::string& remotePortOwnerId, const std::string& remotePortId)  override;
