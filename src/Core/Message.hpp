@@ -18,10 +18,13 @@ public:
     ~Message(){};
     void Set(uint64_t id, uint64_t timestamp, const T&  data);
     void Set(uint64_t id, uint64_t timestamp, const T&& data);
-    uint64_t Id() { return id; }
+    uint64_t Id() const { return id; }
     uint64_t Timestamp() const { return timestamp; }
-    T &DataRef() { return data; }
-    T GetData() { return data; }
+    T& DataRef()  { return data; }
+    T* DataPtr()  { return &data;}
+    const T& DataConstRef() const { return data; }
+    const T* DataConstPtr() const { return &data;}
+    T GetData() const { return data; }
 
 protected:
 private:
