@@ -6,6 +6,10 @@
 #include <set>
 #include <map>
 
+class IP7_Client;
+class IP7_Trace;
+class IP7_Telemetry;
+
 namespace rf
 {
   using ActorCreatorFunction = std::function<IAbstractActor *(const std::string &, const std::string &)>;
@@ -13,8 +17,7 @@ namespace rf
   {
   public:
     SystemLocal();
-
-    virtual ~SystemLocal() = default;
+    virtual ~SystemLocal();
     bool Init(json);
     json Scheme();
     void Clear();
@@ -33,9 +36,15 @@ namespace rf
     void Activate();
     void Deactivate();
 
-  protected:
+  private:
     void RemoveAllConectionsWithActor(std::shared_ptr<IAbstractActor>);
+    void InitLogger();
+    
   protected:
     std::map<std::string, std::shared_ptr<IAbstractActor>> _mapActors;
+    std::unique_ptr<IP7_Client> logClient;
+    std::unique_ptr<IP7_Trace> logTrace;
+    std::unique_ptr<IP7_Telemetry> logTelemetry;
+
   };
 }

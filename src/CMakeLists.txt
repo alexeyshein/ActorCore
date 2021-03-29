@@ -51,6 +51,7 @@ target_include_directories(${PROJECT_NAME}
           PUBLIC  
                  nlohmann_json::json
                   Threads::Threads
+                  p7
 )
 
 
