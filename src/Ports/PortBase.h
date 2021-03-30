@@ -8,11 +8,12 @@
 
 namespace rf
 {
+  class Logger;
   class PortBase : public IPort
   {
   public:
     PortBase(std::string id);
-    virtual ~PortBase() = default;
+    virtual ~PortBase();
     std::string Id() override { return _id; }
     std::string Type() override {return  _type;}
     bool Init(const json&) override;
@@ -43,5 +44,7 @@ namespace rf
   protected:
     std::string _id;
     std::string _type;
+    std::unique_ptr<Logger> logger;
+    
   };
 }

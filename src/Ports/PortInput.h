@@ -28,7 +28,8 @@ class PortInput: public virtual PortBase
    bool isTrigger;
    rf::SharedQueue<std::shared_ptr<IMessage>> _queuePtrData;
    std::function<void(std::string,std::shared_ptr<IMessage>)> functionOnRecive;
-
+  private:
+  uint16_t      teleChannelQueueSizeId;
 };
 }
 

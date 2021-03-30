@@ -2,38 +2,29 @@
 
 #include <iostream>
 
-#include <P7_Trace.h>
-#include <P7_Telemetry.h>
+
 
 #include "IAbstractActor.h"
 #include "ActorFactoryCollection.hpp"
 #include "UidGenerator.hpp"
+#include "Logger.h";
 
 using nlohmann::json;
 using rf::ActorCreatorFunction;
 using rf::IAbstractActor;
 using rf::SystemLocal;
+using rf::Logger;
 
 SystemLocal::SystemLocal():
-logClient(nullptr)
-,logTrace(nullptr)
-, logTelemetry(nullptr)
+logger(new Logger())
 {
-  InitLogger();
+  if(logger)
+    logger->CreateAndShare(std::wstring(L"/P7.Sink=Baical /P7.Addr=127.0.0.1"));
 }
 
 SystemLocal::~SystemLocal()
 {
-  logTelemetry.release();
-  
-  if(logTrace)
-  {
-  logTrace->Unregister_Thread(0);
-  logTrace.release();
-  }
 
-
-  logClient.release();
 }
 
 bool SystemLocal::Init(nlohmann::json scheme)
@@ -44,6 +35,8 @@ bool SystemLocal::Init(nlohmann::json scheme)
   if (actorsJson == scheme.end())
    {
       std::cerr << "Actors Not Found";
+      if(logger->trace)
+        logger->trace->P7_TRACE(0, TM("Actors Not Found"));
       return false;
    }
   for (const auto &actorJson : *actorsJson)
@@ -51,7 +44,8 @@ bool SystemLocal::Init(nlohmann::json scheme)
     auto actor = Spawn(actorJson);
     if (!actor)
     {
-      std::cerr << "Actor wasn`t spawned:"<<actorJson;
+      if(logger->trace)
+        logger->trace->P7_TRACE(0, TM("Actor wasn`t spawned:%s"),actorJson);
       Clear();
       return false;
     }  
@@ -60,20 +54,21 @@ bool SystemLocal::Init(nlohmann::json scheme)
   auto const connectionsJson = scheme.find("connections");
   if (connectionsJson == scheme.end())
    {
-      //std::cerr << "Connections Not Found";
-      logTrace->P7_WARNING(0, TM("Connections Not Found"));
+      if(logger->trace)
+        logger->trace->P7_TRACE(0, TM("Connections Not Found"));
       return false;
    }
   for (const auto &connectionJson : *connectionsJson)
   {
       if(!Connect(connectionJson))
       {
-        //std::cerr << "Connection problem:"<<connectionJson;
-        logTrace->P7_WARNING(0, TM("Connection problem %s"), connectionJson);
+        if(logger->trace)
+          logger->trace->P7_TRACE(0, TM("Connection problem %s"), connectionJson);
         return false;
       }
   }
-  logTrace->P7_INFO(0, TM("Actor System was Init successfully #%d"), 0);
+  if(logger->trace)
+    logger->trace->P7_INFO(0, TM("Actor System was Init successfully #%d"), 0);
   return true;
 }
 
@@ -126,6 +121,8 @@ std::shared_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor)
   }
   catch (...)
   {
+    if(logger->trace)
+      logger->trace->P7_TRACE(0, TM("Spawn error %s"), jsonActor);
   }
   return actorPtr;
 }
@@ -272,28 +269,4 @@ void SystemLocal::Deactivate()
 }
 
 
-  void SystemLocal::InitLogger()
-  {
-    P7_Set_Crash_Handler();
-
-    logClient.reset(P7_Create_Client(TM("/P7.Sink=Baical /P7.Addr=127.0.0.1")));
-    if(!logClient)
-      return;
-    
-    logTrace.reset(P7_Create_Trace(logClient.get(), TM("Trace channel 1")));
-    if(logTrace)
-    {
-    logTrace->Register_Thread(TM("ActorSystem"), 0);
-    //IP7_Trace::hModule l_hModule    = NULL;
-    //logTrace->Register_Module(TM("SystemLocal"), &l_hModule);
-    }
-
-    // stTelemetry_Conf   l_stConf     = {};
-    // l_stConf.pContext              = nullptr;
-    // l_stConf.pEnable_Callback      = nullptr;
-    // l_stConf.pTimestamp_Callback   = nullptr;
-    // l_stConf.qwTimestamp_Frequency = 0ull;
-    // l_stConf.pConnect_Callback     = &Connect;
-
-    logTelemetry.reset(P7_Create_Telemetry(logClient.get(), TM("Telemetry channel 1")));
-  }
+ 

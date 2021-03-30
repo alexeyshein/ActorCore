@@ -1,14 +1,21 @@
 #include "PortBase.h"
+#include "Logger.h"
 
 using  rf::PortBase;
+using rf::Logger;
 using nlohmann::json;
 
 PortBase::PortBase(std::string id):
  _id(id)
 , _type("PortBase")
+, logger(new Logger())
 {
-
+  logger->ConnectToShare();
 }
+
+PortBase::~PortBase(){
+  
+};
 
 json PortBase::Configuration()
 {

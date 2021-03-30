@@ -6,12 +6,10 @@
 #include <set>
 #include <map>
 
-class IP7_Client;
-class IP7_Trace;
-class IP7_Telemetry;
 
 namespace rf
 {
+  class Logger;
   using ActorCreatorFunction = std::function<IAbstractActor *(const std::string &, const std::string &)>;
   class SystemLocal
   {
@@ -38,13 +36,11 @@ namespace rf
 
   private:
     void RemoveAllConectionsWithActor(std::shared_ptr<IAbstractActor>);
-    void InitLogger();
+    void InitLogger(std::wstring initParams);
     
   protected:
     std::map<std::string, std::shared_ptr<IAbstractActor>> _mapActors;
-    std::unique_ptr<IP7_Client> logClient;
-    std::unique_ptr<IP7_Trace> logTrace;
-    std::unique_ptr<IP7_Telemetry> logTelemetry;
+    std::unique_ptr<Logger> logger;
 
   };
 }

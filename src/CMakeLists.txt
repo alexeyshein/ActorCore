@@ -20,6 +20,8 @@ file(GLOB HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/Ports/*.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/System/*.h
   ${CMAKE_CURRENT_SOURCE_DIR}/System/*.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Utils/*.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/Utils/*.hpp
 )
 
 file(GLOB SOURCES 
@@ -29,7 +31,7 @@ file(GLOB SOURCES
   ${PROJECT_SOURCE_DIR}/Ports/*.cpp
   ${PROJECT_SOURCE_DIR}/Ports/*.cpp
   ${PROJECT_SOURCE_DIR}/System/*.cpp
-
+  ${PROJECT_SOURCE_DIR}/Utils/*.cpp
  )
 
 source_group("Header Files" FILES ${HEADERS})
@@ -45,6 +47,7 @@ target_include_directories(${PROJECT_NAME}
     ${PROJECT_SOURCE_DIR}/Core
     ${PROJECT_SOURCE_DIR}/Ports
     ${PROJECT_SOURCE_DIR}/System
+    ${PROJECT_SOURCE_DIR}/Utils
  )
 
  target_link_libraries(${PROJECT_NAME}
