@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PortBase.h"
-#include "SharedQueue.hpp"
+#include "SharedQueue.h"
 #include "IMessage.h"
 
 namespace rf
@@ -23,10 +23,11 @@ class PortInput: public virtual PortBase
 
   void Receive(std::shared_ptr<IMessage> data) override;
   void SetEveventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)>)  override;
-
+  
+  SharedQueue<std::shared_ptr<IMessage>>& GetMessageQueueRef(){return _queuePtrData;} 
   protected:
    bool isTrigger;
-   rf::SharedQueue<std::shared_ptr<IMessage>> _queuePtrData;
+   SharedQueue<std::shared_ptr<IMessage>> _queuePtrData;
    std::function<void(std::string,std::shared_ptr<IMessage>)> functionOnRecive;
   private:
   uint16_t      teleChannelQueueSizeId;

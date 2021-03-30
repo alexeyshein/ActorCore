@@ -49,9 +49,10 @@ bool ActorBlocking::SetProperty(const std::string& propertyName, int value)
   return ActorLocal::SetProperty(propertyName, value);
 }
 
-void ActorBlocking::OnActivate()
+void ActorBlocking::Activate()
 {
-	_flagStop = false;
+	ActorLocal::Activate();
+  	_flagStop = false;
 	if (_processingLoopThread.joinable())
 	{
 		return; //Уже запущен
@@ -60,19 +61,16 @@ void ActorBlocking::OnActivate()
 	_processingLoopThread = std::thread(&ActorBlocking::processingLoop, this);
 	return;
 }
-
-/*!
-\brief Останов  потока циклической обработки.
-\return успех
-*/
-void ActorBlocking::OnDeactivate()
+void ActorBlocking::Deactivate()
 {
-	_flagStop = true;
+	ActorLocal::Deactivate();
+    _flagStop = true;
 	//поток контроля состояния каналов
 	if (_processingLoopThread.joinable()) //Запущен?
 		_processingLoopThread.join();
 	return ;
 }
+
 
 json ActorBlocking::GetStatus()
 {

@@ -1,6 +1,6 @@
 #pragma once
 #include "IMessagePublisher.h"
-#include "SharedQueue.hpp"
+#include "SharedQueue.h"
 #include <memory>
 #include <vector>
 #include <future>

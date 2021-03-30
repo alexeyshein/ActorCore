@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SharedQueue.hpp"
+#include "SharedQueue.h"
 #include <memory>
 #include <functional>
 #include <unordered_map>            // std::unordered_map

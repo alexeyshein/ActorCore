@@ -1,8 +1,11 @@
 #include "ActorEventBased.h"
+#include "Logger.h"
 
 using rf::ActorEventBased;
 using rf::ActorLocal;
 using rf::IPort;
+using rf::Logger;
+
 using nlohmann::json;
 
 ActorEventBased::ActorEventBased(const std::string& id) 
@@ -12,6 +15,11 @@ ActorEventBased::ActorEventBased(const std::string& id)
 
 {
     _type = "ActorEventBased" ;
+   if(logger->telemetry)
+   {
+    std::wstring telemetryName{Logger::StrToWstr(id)+L"_activeTasks"};
+    logger->telemetry->Create(telemetryName.c_str(), 0,-1,255,255,true, &teleChannelFutureQueueSizeId);
+  }
 }
 
 
@@ -79,6 +87,8 @@ void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<
   if(isAsync)
   {
     	myFutureQueue.emplace_back(std::async(std::launch::async, &ActorEventBased::Process, this, portId, dataPtr));
+      if(logger->telemetry)
+        logger->telemetry->Add(teleChannelFutureQueueSizeId, myFutureQueue.size());
   }else
   {
        Process(portId, dataPtr);
@@ -99,6 +109,8 @@ void ActorEventBased::SanitizeQueue()
 			 {
 			 	myFutureQueue.pop_front();
 			 	ready = true;
+        if(logger->telemetry)
+          logger->telemetry->Add(teleChannelFutureQueueSizeId, myFutureQueue.size());
 			 }
 		}
 	}

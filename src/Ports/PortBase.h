@@ -37,7 +37,7 @@ namespace rf
 	  void CleanObservers() override{}
     std::set<std::pair<std::string, std::string>>  IdentifiersOfNotifiable() override {return std::set<std::pair<std::string, std::string>>();}
 
-       //for inputs specific
+    //for inputs specific
     void Receive(std::shared_ptr<IMessage> data) override{}
     void SetEveventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)>)  override{}
 

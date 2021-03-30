@@ -2,7 +2,7 @@
 
 #include <future>
 #include "ActorLocal.h"
-#include "SharedQueue.hpp"
+#include "SharedQueue.h"
 
 namespace rf
 {
@@ -17,7 +17,9 @@ namespace rf
     bool SetProperty(const std::string&, bool) override ;
     bool SetProperty(const std::string&, int) override ;
     virtual void OnInputReceive(const std::string &, std::shared_ptr<IMessage> &) final;
-
+   
+    void Activate() final {ActorLocal::Activate();}
+    void Deactivate() final {ActorLocal::Deactivate();}
   protected:
     virtual bool ApproveTask(const std::string &, std::shared_ptr<IMessage> &) { return true; };
     virtual void Process(const std::string &portId, std::shared_ptr<IMessage> &dataPtr) = 0;
@@ -28,5 +30,7 @@ namespace rf
   protected:
     SharedQueue<std::future<void>> myFutureQueue;
     bool isAsync;
+    uint16_t      teleChannelFutureQueueSizeId;
+
   };
 }

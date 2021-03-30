@@ -18,7 +18,7 @@ PortInput::PortInput(std::string id)
   if(logger->telemetry)
   {
     std::wstring telemetryName{Logger::StrToWstr(id)+L"_queueSize"};
-    logger->telemetry->Create(telemetryName.c_str(), 0,-1,65535,65535,true, &teleChannelQueueSizeId);
+    logger->telemetry->Create(telemetryName.c_str(), 0,-1,255,255,true, &teleChannelQueueSizeId);
   }
 }
 

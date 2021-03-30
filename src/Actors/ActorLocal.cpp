@@ -2,13 +2,20 @@
 #include "ActorLocal.h"
 #include "UidGenerator.hpp"
 #include "PortFactory.h"
+#include "Logger.h"
 
 using rf::ActorLocal;
 using rf::IPort;
+using rf::Logger;
 
 using nlohmann::json;
 
-ActorLocal::ActorLocal(const std::string &id) : _id(id), _type("ActorLocal")
+ActorLocal::ActorLocal(const std::string &id) : _id(id), _type("ActorLocal"), logger(new Logger())
+{
+  logger->ConnectToShare();
+}
+
+ActorLocal::~ActorLocal()
 {
 }
 
@@ -53,8 +60,6 @@ std::vector<std::shared_ptr<IPort>> ActorLocal::GetPorts()
     ports.push_back(portInternal);
   return ports;
 }
-
-
 
 json ActorLocal::GetStatus()
 {

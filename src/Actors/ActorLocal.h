@@ -4,11 +4,13 @@
 #include "IPort.h"
 namespace rf
 {
+  class Logger;
+
   class ActorLocal : public IAbstractActor
   {
   public:
     ActorLocal(const std::string& id); 
-    virtual ~ActorLocal() = default;
+    virtual ~ActorLocal();
     //Returns the ID of this actor.
     std::string Id() override { return _id; }
     std::string Type() {return  _type;}
@@ -36,8 +38,8 @@ namespace rf
     void DisconnectAll(const std::string& actorIdExternal, const std::string& portIdExternal) override;
 
     bool IsActive() final {return _flagActive;}
-    void Activate() final {_flagActive = true;OnActivate();}
-    void Deactivate() final {_flagActive = false;OnDeactivate();}
+    void Activate() override {_flagActive = true;OnActivate();}
+    void Deactivate() override {_flagActive = false;OnDeactivate();}
 
   protected:
     //void Nottify();
@@ -51,5 +53,8 @@ namespace rf
     std::map<std::string, std::shared_ptr<IPort>> _mapPorts;
     //Флаг активации актора
     bool _flagActive;
+
+    std::unique_ptr<Logger> logger;
+
   };
 }

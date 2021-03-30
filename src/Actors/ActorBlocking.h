@@ -19,11 +19,11 @@ namespace rf
 
 	   json GetStatus() override;
 
+        void Activate() final;
+        void Deactivate() final;
+		
 	protected:
-	   
-       void OnActivate() override;
 
-       void OnDeactivate() override;
 			/*!
 	\brief Циклически вызываемая функция.
 	\return успех
