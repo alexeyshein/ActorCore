@@ -61,7 +61,7 @@ bool Logger::CreateAndShare(std::wstring initParams)
     telemetry.reset(P7_Create_Telemetry(client.get(), telemetryInstanceName.c_str()));
     if(!telemetry)
         return false;
-    telemetry->Share(telemetryInstanceName.c_str());
+    return telemetry->Share(telemetryInstanceName.c_str());
 }
 
 
@@ -79,6 +79,8 @@ bool Logger::ConnectToShare()
     telemetry.reset(P7_Get_Shared_Telemetry(telemetryInstanceName.c_str()));
     if(!telemetry)
         return false;
+    
+    return true;
 }
 
 
