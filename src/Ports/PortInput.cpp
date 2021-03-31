@@ -111,7 +111,6 @@ bool PortInput::SetProperty(const std::string& propertyName, std::string value)
 void PortInput::Receive(std::shared_ptr<IMessage> dataPtr)
 {
    _queuePtrData.push_back(dataPtr);
-
     logger->Telemetry(teleChannelQueueSizeId, _queuePtrData.size());
     
    if(isTrigger && functionOnRecive)

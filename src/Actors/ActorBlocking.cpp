@@ -2,8 +2,12 @@
 #include <json.hpp>
 #include <chrono>
 #include <iostream>
+
+#include "Logger.h"
+
 using rf::ActorBlocking;
 using rf::IPort;
+using rf::Logger;
 
 using nlohmann::json;
 
@@ -12,6 +16,9 @@ ActorBlocking::ActorBlocking(const std::string& id)
 , minLoopTimeMks(100)
 {
 	_type = "ActorBlocking";
+	
+	std::wstring telemetryName{Logger::StrToWstr(id)+L"_isProcess"};
+    logger->CreateTelemetryChannel(telemetryName.c_str(), 0,-1,2,1,true, &teleChannelIsProcessing);
 }
 
  ActorBlocking::~ActorBlocking()
@@ -89,7 +96,9 @@ void ActorBlocking::processingLoop()
 	while (!_flagStop)
 	{
 			auto timeout = std::chrono::system_clock::now()+minLoopTime;
+			logger->Telemetry(teleChannelIsProcessing, 1);
 			bool res =  Process();
+			logger->Telemetry(teleChannelIsProcessing, 0);
 			std::this_thread::sleep_until(timeout);
 	}
 }

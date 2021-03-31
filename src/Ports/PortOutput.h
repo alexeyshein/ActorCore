@@ -39,5 +39,9 @@ namespace rf
     rf::MessagePublisherFunctor<std::shared_ptr<IMessage>> publisher;
     //Needs only for information matters
     std::set<std::pair<std::string, std::string>>  setIdentifiersOfNotifiable;
+    
+    //For Telemetry Purpose
+    uint16_t      teleChannelIsNotifying;
+
   };
 }

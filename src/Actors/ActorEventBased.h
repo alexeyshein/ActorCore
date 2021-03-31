@@ -1,6 +1,7 @@
 #pragma once
 
 #include <future>
+
 #include "ActorLocal.h"
 #include "SharedQueue.h"
 
@@ -23,14 +24,18 @@ namespace rf
   protected:
     virtual bool ApproveTask(const std::string &, std::shared_ptr<IMessage> &) { return true; };
     virtual void Process(const std::string &portId, std::shared_ptr<IMessage> &dataPtr) = 0;
-
+    
+    void ProcessWrap(const std::string &portId, std::shared_ptr<IMessage> &dataPtr);
   private:
     void SanitizeQueue();
 
   protected:
     SharedQueue<std::future<void>> myFutureQueue;
     bool isAsync;
-    uint16_t      teleChannelFutureQueueSizeId;
+
+    // For Telemetry purpose
+    uint16_t      teleChannelActiveTasks;
+    uint16_t      teleChannelIsProcessing;
 
   };
 }

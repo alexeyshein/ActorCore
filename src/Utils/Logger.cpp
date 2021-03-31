@@ -37,7 +37,13 @@ bool Logger::Trace( tUINT16            i_wTrace_ID, eP7Trace_Level  i_eLevel, IP
                 ...)
 {
     if(trace)
-       return trace->Trace(i_wTrace_ID, i_eLevel, i_hModule, i_wLine, i_pFile, i_pFunction, i_pFormat);
+    {
+      va_list args;
+      va_start(args, i_pFormat);
+      bool res = trace->Trace_Embedded(i_wTrace_ID, i_eLevel, i_hModule, i_wLine, i_pFile, i_pFunction, &i_pFormat, &args);
+      va_end(args);
+      return res;
+    } 
     return false;
 }
 

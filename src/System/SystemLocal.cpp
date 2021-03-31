@@ -43,7 +43,7 @@ bool SystemLocal::Init(nlohmann::json scheme)
     auto actor = Spawn(actorJson);
     if (!actor)
     {
-      logger->TRACE(0, TM("Actor wasn`t spawned:%s"),actorJson);
+      logger->WARNING(0, TM("Actor wasn`t spawned:%S"),actorJson.dump().c_str());
       Clear();
       return false;
     }  
@@ -52,19 +52,19 @@ bool SystemLocal::Init(nlohmann::json scheme)
   auto const connectionsJson = scheme.find("connections");
   if (connectionsJson == scheme.end())
    {
-      logger->TRACE(0, TM("Connections Not Found"));
+      logger->WARNING(0, TM("Connections Not Found"));
       return false;
    }
   for (const auto &connectionJson : *connectionsJson)
   {
       if(!Connect(connectionJson))
       {
-        logger->TRACE(0, TM("Connection problem %s"), connectionJson);
+        logger->WARNING(0, TM("Connection problem %S"), connectionJson.dump().c_str());
         return false;
       }
   }
   if(logger->trace)
-    logger->INFO(0, TM("Actor System was Init successfully #%d"), 0);
+    logger->INFO(0, TM("Actor System was Init successfully %d"), 0);
   return true;
 }
 
