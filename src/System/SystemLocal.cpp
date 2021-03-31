@@ -35,8 +35,7 @@ bool SystemLocal::Init(nlohmann::json scheme)
   if (actorsJson == scheme.end())
    {
       std::cerr << "Actors Not Found";
-      if(logger->trace)
-        logger->trace->P7_TRACE(0, TM("Actors Not Found"));
+      logger->TRACE(0, TM("Actors Not Found"));
       return false;
    }
   for (const auto &actorJson : *actorsJson)
@@ -44,8 +43,7 @@ bool SystemLocal::Init(nlohmann::json scheme)
     auto actor = Spawn(actorJson);
     if (!actor)
     {
-      if(logger->trace)
-        logger->trace->P7_TRACE(0, TM("Actor wasn`t spawned:%s"),actorJson);
+      logger->TRACE(0, TM("Actor wasn`t spawned:%s"),actorJson);
       Clear();
       return false;
     }  
@@ -54,21 +52,19 @@ bool SystemLocal::Init(nlohmann::json scheme)
   auto const connectionsJson = scheme.find("connections");
   if (connectionsJson == scheme.end())
    {
-      if(logger->trace)
-        logger->trace->P7_TRACE(0, TM("Connections Not Found"));
+      logger->TRACE(0, TM("Connections Not Found"));
       return false;
    }
   for (const auto &connectionJson : *connectionsJson)
   {
       if(!Connect(connectionJson))
       {
-        if(logger->trace)
-          logger->trace->P7_TRACE(0, TM("Connection problem %s"), connectionJson);
+        logger->TRACE(0, TM("Connection problem %s"), connectionJson);
         return false;
       }
   }
   if(logger->trace)
-    logger->trace->P7_INFO(0, TM("Actor System was Init successfully #%d"), 0);
+    logger->INFO(0, TM("Actor System was Init successfully #%d"), 0);
   return true;
 }
 
@@ -121,8 +117,7 @@ std::shared_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor)
   }
   catch (...)
   {
-    if(logger->trace)
-      logger->trace->P7_TRACE(0, TM("Spawn error %s"), jsonActor);
+      logger->TRACE(0, TM("Spawn error %s"), jsonActor);
   }
   return actorPtr;
 }

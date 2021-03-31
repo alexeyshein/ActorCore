@@ -15,11 +15,9 @@ PortInput::PortInput(std::string id)
 , _queuePtrData(0)
 {
   _type = "PortInput";
-  if(logger->telemetry)
-  {
-    std::wstring telemetryName{Logger::StrToWstr(id)+L"_queueSize"};
-    logger->telemetry->Create(telemetryName.c_str(), 0,-1,255,255,true, &teleChannelQueueSizeId);
-  }
+
+  std::wstring telemetryName{Logger::StrToWstr(id)+L"_queueSize"};
+  logger->CreateTelemetryChannel(telemetryName.c_str(), 0,-1,255,255,true, &teleChannelQueueSizeId);
 }
 
 bool PortInput::Init(const json& config)
@@ -114,8 +112,7 @@ void PortInput::Receive(std::shared_ptr<IMessage> dataPtr)
 {
    _queuePtrData.push_back(dataPtr);
 
-   if(logger->telemetry)
-    logger->telemetry->Add(teleChannelQueueSizeId, _queuePtrData.size());
+    logger->Telemetry(teleChannelQueueSizeId, _queuePtrData.size());
     
    if(isTrigger && functionOnRecive)
      functionOnRecive(_id, dataPtr);
