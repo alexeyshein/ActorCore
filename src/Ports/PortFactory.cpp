@@ -7,20 +7,20 @@
 
 using namespace rf;
 
-std::unique_ptr<IPort>  PortFactory::Create(std::string type, std::string id)
+std::unique_ptr<IPort>  PortFactory::Create(std::string type, std::string id, std::weak_ptr<IUnit> parent)
 {
 	std::unique_ptr<IPort> port(nullptr);
 	if (type == "Input")
 	{
-		port.reset(new PortInput(id));
+		port.reset(new PortInput(id, parent ));
 	}
 	else if (type == "Output")
 	{
-		port.reset(new PortOutput(id));
+		port.reset(new PortOutput(id, parent));
 	}
 	else if (type == "BiDirectional")
 	{
-		port.reset(new PortOutput(id));
+		port.reset(new PortOutput(id, parent));
 	}
 	return std::move(port);
 }

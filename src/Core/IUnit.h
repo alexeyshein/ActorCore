@@ -17,8 +17,8 @@ class IUnit
   virtual std::string Type() = 0;//{return std::string("IUnit");};
   virtual bool Init(const json&) = 0;
   virtual json Configuration() = 0;
-  virtual IUnit* Parent() = 0;
-  virtual std::vector<IUnit*> Children() = 0;
+  virtual std::weak_ptr<IUnit> Parent() = 0;
+  virtual std::vector<std::weak_ptr<IUnit>> Children() = 0;
   virtual std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string&) = 0;
   virtual bool SetProperty(const std::string&, bool) = 0;
   virtual bool SetProperty(const std::string&, int) = 0;

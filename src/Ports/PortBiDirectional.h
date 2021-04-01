@@ -10,7 +10,7 @@ class PortBiDirectional:public PortInput , public PortOutput
 {
   public:
 
-  PortBiDirectional(std::string id);
+  PortBiDirectional(std::string id, std::weak_ptr<IUnit> parent = std::weak_ptr<IUnit>());
 
   virtual ~PortBiDirectional()=default;
 

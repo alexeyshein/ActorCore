@@ -11,7 +11,7 @@ namespace rf
   class PortOutput : public virtual PortBase
   {
   public:
-    PortOutput(std::string id);
+    PortOutput(std::string id, std::weak_ptr<IUnit> parent = std::weak_ptr<IUnit>());
     virtual ~PortOutput() = default;
 
     bool Init(const json&) override;
@@ -21,8 +21,8 @@ namespace rf
     bool SetProperty(const std::string&, bool) override;
     bool SetProperty(const std::string&, int) override;
 
-    void Attach( const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort) override;
-	  void Detach( const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort) override;
+    void Attach( const  std::string& remotePortOwnerId, std::weak_ptr<IPort>& ptrRemotePort) override;
+	  void Detach( const  std::string& remotePortOwnerId, std::weak_ptr<IPort>& ptrRemotePort) override;
     void Detach( const  std::string& remotePortOwnerId, const std::string& remotePortId)  override;
     
 	  void Notify(const std::shared_ptr<IMessage> &data) override;

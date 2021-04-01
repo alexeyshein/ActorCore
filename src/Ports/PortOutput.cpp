@@ -4,8 +4,8 @@
 using rf::PortOutput;
 using nlohmann::json;
 
-PortOutput::PortOutput(std::string id)
-    : rf::PortBase(id)
+PortOutput::PortOutput(std::string id, std::weak_ptr<IUnit> parent)
+    : rf::PortBase(id, parent)
 {
   _type = "PortOutput";
   publisher.SetAsyncMode(true);
@@ -65,16 +65,22 @@ bool  PortOutput::SetProperty(const std::string& propertyName, int value)
    return PortBase::SetProperty(propertyName, value);
 }
 
-void PortOutput::Attach(const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort)
+void PortOutput::Attach(const  std::string& remotePortOwnerId, std::weak_ptr<IPort>& ptrWeakRemotePort)
 {
+  auto ptrRemotePort = ptrWeakRemotePort.lock();
+  if(!ptrRemotePort)
+    return;
   std::size_t linkId = std::hash<std::string>{}(remotePortOwnerId+ptrRemotePort->Id());
   std::function<void(const std::shared_ptr<IMessage> &)> f = std::bind(&rf::IPort::Receive, ptrRemotePort.get(), std::placeholders::_1);
   publisher.Attach(linkId, f);
   setIdentifiersOfNotifiable.emplace(std::pair<std::string,std::string>(remotePortOwnerId, ptrRemotePort->Id()));
 }
 
-void PortOutput::Detach(const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort)
+void PortOutput::Detach(const  std::string& remotePortOwnerId, std::weak_ptr<IPort>& ptrWeakRemotePort)
 {
+  auto ptrRemotePort = ptrWeakRemotePort.lock();
+  if(!ptrRemotePort)
+    return;
   this->Detach( remotePortOwnerId, ptrRemotePort->Id());
 }
 

@@ -22,12 +22,12 @@ TEST_CASE("Actors are Spawned  By System", "")
     {
         for(const auto &curType: myActorTypes)
         {
-            auto actor  = system.Spawn(curType);
+            auto actor  = system.Spawn(curType).lock();
             REQUIRE(actor != nullptr); //
         }
         REQUIRE(system.countActors() == myActorTypes.size()); //
 
-        REQUIRE(system.Spawn(std::string("zero")) == nullptr); 
+        REQUIRE(system.Spawn(std::string("zero")).lock() == nullptr); 
         REQUIRE(system.countActors() == myActorTypes.size());
     }
 

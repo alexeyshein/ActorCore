@@ -23,8 +23,8 @@ class IPort:public virtual IUnit
   virtual json Connections() = 0;
 
   //for oututs specific
-  virtual void Attach( const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort) = 0;
-	virtual void Detach( const  std::string& remotePortOwnerId, std::shared_ptr<IPort>& ptrRemotePort) = 0;
+  virtual void Attach( const  std::string& remotePortOwnerId, std::weak_ptr<IPort>& ptrRemotePort) = 0;
+	virtual void Detach( const  std::string& remotePortOwnerId, std::weak_ptr<IPort>& ptrRemotePort) = 0;
   virtual void Detach( const  std::string& remotePortOwnerId, const std::string& remotePortId)  = 0;
 
 	virtual void Notify(const std::shared_ptr<IMessage> &data) = 0;

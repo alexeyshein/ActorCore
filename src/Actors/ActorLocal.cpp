@@ -53,9 +53,9 @@ json ActorLocal::Connections()
   return connections;
 }
 
-std::vector<std::shared_ptr<IPort>> ActorLocal::GetPorts()
+std::vector<std::weak_ptr<IPort>> ActorLocal::GetPorts()
 {
-  std::vector<std::shared_ptr<IPort>> ports;
+  std::vector<std::weak_ptr<IPort>> ports;
   for (const auto &[portIdInternal, portInternal] : _mapPorts)
     ports.push_back(portInternal);
   return ports;
@@ -113,40 +113,51 @@ std::shared_ptr<IPort> ActorLocal::addPort(const json &portJson)
   return port;
 }
 
-bool ActorLocal::ConnectTo(const std::string &actorIdExternal, std::shared_ptr<IPort> &portExternal, const std::string &portIdInternal)
+bool ActorLocal::ConnectTo(const std::string &actorIdExternal, std::weak_ptr<IPort> &portExternalWeakPtr, const std::string &portIdInternal)
 {
-  auto portInternal = GetPortById(portIdInternal);
+  auto portInternalWeakPtr = GetPortById(portIdInternal);
+  auto portInternal = portInternalWeakPtr.lock();
   if (!portInternal)
     return false;
   // можно не проверять тип порта, т.к. для входа Attach ничего не делает
   // а лучше вызвать для входа и выхода сразу
-  portExternal->Attach(_id, portInternal);
-  portInternal->Attach(actorIdExternal, portExternal);
+  auto portExternal = portExternalWeakPtr.lock();
+  if(!portExternal)
+    return false;
+  portExternal->Attach(_id, portInternalWeakPtr);
+  portInternal->Attach(actorIdExternal, portExternalWeakPtr);
   return true;
 }
 
-bool ActorLocal::ConnectTo(std::shared_ptr<IAbstractActor> &actorExternal, const std::string &portIdExternal, const std::string &portIdInternal)
+bool ActorLocal::ConnectTo(std::weak_ptr<IAbstractActor> &actorExternalWeakPtr, const std::string &portIdExternal, const std::string &portIdInternal)
 {
+  auto actorExternal = actorExternalWeakPtr.lock();
+  if(!actorExternal)
+   return false;
   auto portExternal = actorExternal->GetPortById(portIdExternal);
-  if (!portExternal)
+  if (!portExternal.lock())
     return false;
 
   return ConnectTo(actorExternal->Id(), portExternal, portIdInternal);
 }
 
-void ActorLocal::Disconnect(const std::string &actorIdExternal, std::shared_ptr<IPort> &portExternal, const std::string &portIdInternal)
+void ActorLocal::Disconnect(const std::string &actorIdExternal, std::weak_ptr<IPort> &portExternalWeakPtr, const std::string &portIdInternal)
 {
-  auto portInternal = GetPortById(portIdInternal);
+  auto portInternalWeakPtr = GetPortById(portIdInternal);
+  auto portInternal = portInternalWeakPtr.lock();
   if (!portInternal)
     return;
   // можно не проверять тип порта, т.к. для входа Attach ничего не делает
-  portInternal->Detach(actorIdExternal, portExternal);
-  portExternal->Detach(_id, portInternal);
+  portInternal->Detach(actorIdExternal, portExternalWeakPtr);
+  auto portExternal = portExternalWeakPtr.lock();
+  if(!portExternal)
+     return;
+  portExternal->Detach(_id, portInternalWeakPtr);
 }
 
 void ActorLocal::Disconnect(const std::string &actorIdExternal, const std::string &portIdExternal, const std::string &portIdInternal)
 {
-  auto portInternal = GetPortById(portIdInternal);
+  auto portInternal = GetPortById(portIdInternal).lock();
   if (portInternal)
     portInternal->Detach(actorIdExternal, portIdExternal);
 }
@@ -159,11 +170,11 @@ void ActorLocal::DisconnectAll(const std::string &actorIdExternal, const std::st
   }
 }
 
-std::shared_ptr<IPort> ActorLocal::GetPortById(const std::string &portId)
+std::weak_ptr<IPort> ActorLocal::GetPortById(const std::string &portId)
 {
   auto it = _mapPorts.find(portId);
   if (it == _mapPorts.end())
-    return nullptr;
+    return std::weak_ptr<IPort>();
 
   return it->second;
 }

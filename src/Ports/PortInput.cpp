@@ -8,8 +8,8 @@ using rf::PortInput;
 using rf::Logger;
 using nlohmann::json;
 
-PortInput::PortInput(std::string id) 
-: PortBase(id)
+PortInput::PortInput(std::string id, std::weak_ptr<IUnit> parent) 
+: PortBase(id, parent )
 , functionOnRecive(nullptr)
 , isTrigger(true)
 , _queuePtrData(0)

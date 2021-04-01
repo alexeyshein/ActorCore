@@ -3,8 +3,8 @@
 using nlohmann::json;
 using rf::PortBiDirectional;
 
-PortBiDirectional::PortBiDirectional(std::string id)
-    : rf::PortBase(id), rf::PortInput(id), rf::PortOutput(id)
+PortBiDirectional::PortBiDirectional(std::string id, std::weak_ptr<IUnit> parent)
+    : rf::PortBase(id, parent), rf::PortInput(id, parent), rf::PortOutput(id, parent)
 {
   _type = "PortBiDirectional";
 }

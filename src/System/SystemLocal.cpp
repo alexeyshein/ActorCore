@@ -7,10 +7,11 @@
 #include "IAbstractActor.h"
 #include "ActorFactoryCollection.hpp"
 #include "UidGenerator.hpp"
-#include "Logger.h";
+#include "Logger.h"
 
 using nlohmann::json;
 using rf::ActorCreatorFunction;
+using rf::IUnit;
 using rf::IAbstractActor;
 using rf::SystemLocal;
 using rf::Logger;
@@ -27,7 +28,7 @@ SystemLocal::~SystemLocal()
 
 }
 
-bool SystemLocal::Init(nlohmann::json scheme)
+bool SystemLocal::Init(const nlohmann::json &scheme)
 {
   Clear();
   // Init Actors
@@ -41,7 +42,7 @@ bool SystemLocal::Init(nlohmann::json scheme)
   for (const auto &actorJson : *actorsJson)
   {
     auto actor = Spawn(actorJson);
-    if (!actor)
+    if (!actor.lock())
     {
       logger->TRACE(0, TM("Actor wasn`t spawned:%s"),actorJson);
       Clear();
@@ -102,7 +103,7 @@ void SystemLocal::Clear()
 }
 
 //by json
-std::shared_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor)
+std::weak_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor)
 {
   std::shared_ptr<IAbstractActor> actorPtr = nullptr;
   try
@@ -123,7 +124,7 @@ std::shared_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor)
 }
 
 //by name
-std::shared_ptr<IAbstractActor> SystemLocal::Spawn(std::string typeName)
+std::weak_ptr<IAbstractActor> SystemLocal::Spawn(std::string typeName)
 {
   std::string id = UidGenerator::Generate(typeName);
   std::shared_ptr<IAbstractActor> actorPtr(ActorFactoryCollection::Create(typeName, id));
@@ -154,14 +155,14 @@ std::shared_ptr<IAbstractActor> SystemLocal::Detach(std::string id)
 }
 
 //spawn copy of existing
-std::shared_ptr<IAbstractActor> SystemLocal::GetActorById(std::string id)
+std::weak_ptr<IAbstractActor> SystemLocal::GetActorById(std::string id)
 {
   auto it = _mapActors.find(id);
   if (it != _mapActors.end())
   {
     return it->second;
   }
-  return nullptr;
+  return std::weak_ptr<IAbstractActor>();
 }
 
 void SystemLocal::RegisterFactory(std::set<std::string> keySet, ActorCreatorFunction functor)
@@ -179,10 +180,10 @@ std::set<std::string> SystemLocal::GetRegisteredActorTypes()
 bool SystemLocal::Connect(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2)
 {
   auto actor1 = GetActorById(idActor1);
-  if (!actor1)
+  if (!actor1.lock())
     return false;
 
-  auto actor2 = GetActorById(idActor2);
+  auto actor2 = GetActorById(idActor2).lock();
   if (!actor2)
     return false;
 
@@ -209,16 +210,16 @@ bool SystemLocal::Connect(json connection)
 
 void SystemLocal::Disconnect(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2)
 {
-  auto actor1 = GetActorById(idActor1);
-  auto actor2 = GetActorById(idActor2);
+  auto actor1 = GetActorById(idActor1).lock();
+  auto actor2 = GetActorById(idActor2).lock();
   if (actor1 && actor2)
   {
     auto port2 = actor2->GetPortById(idPortActor2);
-    if (port2)
+    if (port2.lock())
       actor1->Disconnect(idActor2, port2, idPortActor1);
 
     auto port1 = actor2->GetPortById(idPortActor2);
-    if (port1)
+    if (port1.lock())
       actor2->Disconnect(idActor1, port1, idPortActor2);
   }
 }
@@ -239,15 +240,18 @@ void SystemLocal::Disconnect(json connection)
 }
 
 
-void SystemLocal::RemoveAllConectionsWithActor(std::shared_ptr<IAbstractActor> actorTarget)
+void SystemLocal::RemoveAllConectionsWithActor(std::weak_ptr<IAbstractActor> ptrWeakActorTarget)
 {
+  auto actorTarget = ptrWeakActorTarget.lock();
+  if(!actorTarget)
+     return;
   auto actorPorts = actorTarget->GetPorts();
   for (auto actorPort : actorPorts)
   {
-    actorPort->CleanObservers();
+    actorPort.lock()->CleanObservers();
     for (auto [actorId, actor] : _mapActors)
     {
-      actor->DisconnectAll(actorTarget->Id(),actorPort->Id());
+      actor->DisconnectAll(actorTarget->Id(),actorPort.lock()->Id());
     }
   }
 }
@@ -262,6 +266,15 @@ void SystemLocal::Deactivate()
 {
     std::for_each(_mapActors.cbegin(), _mapActors.cend(),[](auto & recInMap){ recInMap.second->Deactivate(); });
 }
+
+
+std::vector<std::weak_ptr<IUnit>> SystemLocal::Children() 
+{
+  std::vector<std::weak_ptr<IUnit>> children;
+  std::for_each(_mapActors.cbegin(), _mapActors.cend(),[&children](auto & recInMap){children.emplace_back(recInMap.second); });
+  return children;
+}
+
 
 
  

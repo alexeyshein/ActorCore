@@ -14,9 +14,9 @@ TEST_CASE("Actors Interchange", "test")
     auto registered = system.GetRegisteredActorTypes();
     REQUIRE(myActorTypes == registered); //
 
-    auto actorEvent = std::dynamic_pointer_cast<ActorSimpleEventBasedForTest>(system.Spawn(std::string("ActorSimpleEventBasedForTest")));
+    auto actorEvent = std::dynamic_pointer_cast<ActorSimpleEventBasedForTest>(system.Spawn(std::string("ActorSimpleEventBasedForTest")).lock());
     REQUIRE(actorEvent != nullptr); //
-    auto actorBlock = std::dynamic_pointer_cast<ActorSimpleBlockingForTest>(system.Spawn(std::string("ActorSimpleBlockingForTest")));
+    auto actorBlock = std::dynamic_pointer_cast<ActorSimpleBlockingForTest>(system.Spawn(std::string("ActorSimpleBlockingForTest")).lock());
     REQUIRE(actorBlock != nullptr); //
 
     SECTION("actorBlock (async out)-> actorEvent (active) messages")

@@ -18,10 +18,10 @@ namespace rf
     bool Init(const json&) override;
     json Configuration() override;
     json Connections() override;
-    IUnit* Parent() override {return nullptr;}
-    virtual std::vector<IUnit*> Children() override {return std::vector<IUnit*>();}
-    std::vector<std::shared_ptr<IPort>> GetPorts() override;
-    std::shared_ptr<IPort> GetPortById(const std::string& portId) override;
+    std::weak_ptr<IUnit> Parent() override {return std::shared_ptr<IUnit>(nullptr);}
+    virtual std::vector<std::weak_ptr<IUnit>> Children() override {return std::vector<std::weak_ptr<IUnit>>();}
+    std::vector<std::weak_ptr<IPort>> GetPorts() override;
+    std::weak_ptr<IPort> GetPortById(const std::string& portId) override;
 
     std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string &) override {return std::monostate{};} 
     bool SetProperty(const std::string&, bool) override{ return true; }
@@ -31,9 +31,9 @@ namespace rf
     json GetStatus() override;
     
     virtual void OnInputReceive(const std::string&, std::shared_ptr<IMessage>&){};
-    bool ConnectTo(const std::string& actorIdExternal, std::shared_ptr<IPort>& portExternal, const std::string& portIdInternal) override;
-    bool ConnectTo(std::shared_ptr<IAbstractActor>& actorExternal, const std::string& portIdExternal, const std::string& portIdInternal) override;
-    void Disconnect(const std::string& actorIdExternal, std::shared_ptr<IPort>& portExternal, const std::string& portIdInternal) override; 
+    bool ConnectTo(const std::string& actorIdExternal, std::weak_ptr<IPort>& portExternal, const std::string& portIdInternal) override;
+    bool ConnectTo(std::weak_ptr<IAbstractActor>& actorExternal, const std::string& portIdExternal, const std::string& portIdInternal) override;
+    void Disconnect(const std::string& actorIdExternal, std::weak_ptr<IPort>& portExternal, const std::string& portIdInternal) override; 
     void Disconnect(const std::string& actorIdExternal, const std::string& portIdExternal, const std::string& portIdInternal) override;
     void DisconnectAll(const std::string& actorIdExternal, const std::string& portIdExternal) override;
 
