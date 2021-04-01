@@ -43,6 +43,8 @@ namespace rf
 
 		size_t minLoopTimeMks;
 	private:
+	    // For Telemetry purpose
+        uint16_t      teleChannelIsProcessing;
 	  
 	};
 }

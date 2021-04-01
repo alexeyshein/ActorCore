@@ -15,11 +15,11 @@ ActorEventBased::ActorEventBased(const std::string& id)
 
 {
     _type = "ActorEventBased" ;
-   if(logger->telemetry)
-   {
+
     std::wstring telemetryName{Logger::StrToWstr(id)+L"_activeTasks"};
-    logger->telemetry->Create(telemetryName.c_str(), 0,-1,255,255,true, &teleChannelFutureQueueSizeId);
-  }
+    logger->CreateTelemetryChannel(telemetryName.c_str(), 0,-1,255,255,true, &teleChannelActiveTasks);
+    telemetryName = std::wstring{Logger::StrToWstr(id)+L"_isProcess"};
+    logger->CreateTelemetryChannel(telemetryName.c_str(), 0,-1,2,1,true, &teleChannelIsProcessing);
 }
 
 
@@ -81,19 +81,27 @@ bool ActorEventBased::SetProperty(const std::string& propertyName, int value)
 
 void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<IMessage>& dataPtr)
 {
+  logger->TRACE(0, TM("%S received message ID:%i on input-> %S"),Id().c_str(),dataPtr->Id(), portId.c_str());
   if(!ApproveTask(portId, dataPtr))
     return;
 	SanitizeQueue();
   if(isAsync)
   {
-    	myFutureQueue.emplace_back(std::async(std::launch::async, &ActorEventBased::Process, this, portId, dataPtr));
-      if(logger->telemetry)
-        logger->telemetry->Add(teleChannelFutureQueueSizeId, myFutureQueue.size());
+    	myFutureQueue.emplace_back(std::async(std::launch::async, &ActorEventBased::ProcessWrap, this, portId, dataPtr));
+      logger->Telemetry(teleChannelActiveTasks, myFutureQueue.size());
   }else
   {
-       Process(portId, dataPtr);
+       ProcessWrap(portId, dataPtr);
   }
 } 
+
+void ActorEventBased::ProcessWrap(const std::string &portId, std::shared_ptr<IMessage> &dataPtr)
+{
+   logger->Telemetry(teleChannelIsProcessing, 1);
+   Process(portId, dataPtr);
+   logger->Telemetry(teleChannelIsProcessing, 0);
+}
+
 
 void ActorEventBased::SanitizeQueue()
 {
@@ -109,8 +117,7 @@ void ActorEventBased::SanitizeQueue()
 			 {
 			 	myFutureQueue.pop_front();
 			 	ready = true;
-        if(logger->telemetry)
-          logger->telemetry->Add(teleChannelFutureQueueSizeId, myFutureQueue.size());
+        logger->Telemetry(teleChannelActiveTasks, myFutureQueue.size());
 			 }
 		}
 	}

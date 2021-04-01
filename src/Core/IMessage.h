@@ -7,8 +7,9 @@ namespace rf
 struct IMessage
 {
   virtual ~IMessage()=default;
-  virtual std::string type() {return std::string("IMessage");};
-
+  //static std::string TypeName(){return std::string("IMessage");};
+  virtual uint64_t Id() const {return 0;}
+  virtual uint64_t Timestamp() const {return 0;}
 };
 }
 

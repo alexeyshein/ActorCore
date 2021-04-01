@@ -96,7 +96,7 @@ void MessagePublisherFunctor<T>::Notify(const T& data)
 		// //Если  _myFutureQueue заполняется до MaxQueue, то выполнение future не помещается в очередь и отбрасывается
 		if(_isAsync)
 		{
-              		_myFutureQueue.emplace_back(std::async(
+            _myFutureQueue.emplace_back(std::async(
 			std::launch::async, [](const Callback<T> &subscriber, const T& dataSend) { subscriber(dataSend); },
 			subscriberFunc, data));
 		}else
