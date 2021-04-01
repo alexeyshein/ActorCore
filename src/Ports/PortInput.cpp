@@ -15,8 +15,10 @@ PortInput::PortInput(std::string id, IUnit* parent)
 , _queuePtrData(0)
 {
   _type = "PortInput";
-
-  std::wstring telemetryName{Logger::StrToWstr(id)+L"_queueSize"};
+  std::string idParent{""};
+  if(parent != nullptr)
+     idParent = parent->Id();
+  std::wstring telemetryName{Logger::StrToWstr(idParent)+L"=>"+Logger::StrToWstr(id)+L"_queueSize"};
   logger->CreateTelemetryChannel(telemetryName.c_str(), 0,-1,255,255,true, &teleChannelQueueSizeId);
 }
 

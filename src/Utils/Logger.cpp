@@ -5,10 +5,7 @@
 
 using rf::Logger;
 
-Logger::Logger():
-  clientInstanceName(L"ActorSystem log client")
-, traceInstanceName(L"Actor System trace channel")
-, telemetryInstanceName(L"Actor System Telemetry channel")
+Logger::Logger()
 {
 
 }
@@ -48,7 +45,7 @@ bool Logger::Trace( tUINT16            i_wTrace_ID, eP7Trace_Level  i_eLevel, IP
 }
 
 
-bool Logger::CreateAndShare(std::wstring initParams)
+bool Logger::Create(std::wstring initParams, std::wstring traceInstanceName,std::wstring telemetryInstanceName)
 {
     Close();
 
@@ -57,32 +54,47 @@ bool Logger::CreateAndShare(std::wstring initParams)
     client.reset(P7_Create_Client(initParams.c_str()));
     if(!client)
       return false;
-    client->Share(clientInstanceName.c_str());
 
     trace.reset(P7_Create_Trace(client.get(), traceInstanceName.c_str()));
     if(!trace)
       return false;
-    trace->Share(traceInstanceName.c_str());
 
     telemetry.reset(P7_Create_Telemetry(client.get(), telemetryInstanceName.c_str()));
     if(!telemetry)
         return false;
-    return telemetry->Share(telemetryInstanceName.c_str());
+    return true;
+}
+
+bool Logger::Share(std::wstring clientShareName,std::wstring traceShareName,std::wstring telemetryShareName)
+{
+    if(!client)
+      return false;
+    client->Share(clientShareName.c_str());
+
+    if(!trace)
+      return false;
+    trace->Share(traceShareName.c_str());
+
+    if(!telemetry)
+        return false;
+    return telemetry->Share(telemetryShareName.c_str());
+    
+    return true;
 }
 
 
-bool Logger::ConnectToShare()
+bool Logger::ConnectToShare(std::wstring clientShareName,std::wstring traceShareName,std::wstring telemetryShareName)
 {
     Close();
-    client.reset(P7_Get_Shared(clientInstanceName.c_str()));
+    client.reset(P7_Get_Shared(clientShareName.c_str()));
     if(!client)
       return false;
     
-    trace.reset(P7_Get_Shared_Trace(traceInstanceName.c_str()));
+    trace.reset(P7_Get_Shared_Trace(traceShareName.c_str()));
     if(!trace)
       return false;
     
-    telemetry.reset(P7_Get_Shared_Telemetry(telemetryInstanceName.c_str()));
+    telemetry.reset(P7_Get_Shared_Telemetry(telemetryShareName.c_str()));
     if(!telemetry)
         return false;
     

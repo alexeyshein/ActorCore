@@ -86,27 +86,16 @@ class Logger
     public:
     Logger();
     ~Logger();
-    bool CreateAndShare(std::wstring initParams);
-    bool ConnectToShare();
+    bool Create(std::wstring initParams, std::wstring traceInstanceName,std::wstring telemetryInstanceName);
+    bool Share(std::wstring clientShareName,std::wstring traceShareName,std::wstring telemetryShareName);
+    bool ConnectToShare(std::wstring clientShareName,std::wstring traceShareName,std::wstring telemetryShareName);
 
     void Telemetry(uint16_t tId, double value);
-    bool CreateTelemetryChannel(const tXCHAR *i_pName, 
-                         tDOUBLE       i_dbMin,
-                         tDOUBLE       i_dbAlarmMin,
-                         tDOUBLE       i_dbMax,
-                         tDOUBLE       i_dbAlarmMax,
-                         tBOOL         i_bOn,
-                         tUINT16      *o_pID );
+    bool CreateTelemetryChannel(const tXCHAR *i_pName, tDOUBLE i_dbMin,  tDOUBLE  i_dbAlarmMin, tDOUBLE  i_dbMax,
+                         tDOUBLE       i_dbAlarmMax, tBOOL  i_bOn,  tUINT16      *o_pID );
 
-
-    bool Trace( tUINT16            i_wTrace_ID,   
-                eP7Trace_Level     i_eLevel, 
-                IP7_Trace::hModule i_hModule,
-                tUINT16            i_wLine,
-                const char        *i_pFile,
-                const char        *i_pFunction,
-                const tXCHAR      *i_pFormat,
-                ...);
+    bool Trace( tUINT16   i_wTrace_ID, eP7Trace_Level i_eLevel, IP7_Trace::hModule i_hModule, tUINT16            i_wLine,
+                const char        *i_pFile,  const char   *i_pFunction,  const tXCHAR      *i_pFormat,   ...);
 
     static std::wstring StrToWstr(std::string); // helper function
 
@@ -114,9 +103,7 @@ class Logger
         void Close();
 
     private:
-    std::wstring clientInstanceName;
-    std::wstring traceInstanceName;
-    std::wstring telemetryInstanceName;
+
 
     public:
     std::unique_ptr<IP7_Client> client;
