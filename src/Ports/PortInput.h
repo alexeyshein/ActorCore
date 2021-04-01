@@ -9,7 +9,7 @@ namespace rf
 class PortInput: public virtual PortBase
 {
   public:
-  PortInput(std::string id, std::weak_ptr<IUnit> parent = std::weak_ptr<IUnit>());
+  PortInput(std::string id, IUnit* parent = nullptr);
 
   virtual ~PortInput()=default;
 

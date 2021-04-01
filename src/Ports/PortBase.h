@@ -12,13 +12,13 @@ namespace rf
   class PortBase : public IPort
   {
   public:
-    PortBase(std::string id, std::weak_ptr<IUnit> parent = std::weak_ptr<IUnit>());
+    PortBase(std::string id, IUnit* parent = nullptr);
     virtual ~PortBase();
     std::string Id() override { return _id; }
     std::string Type() override {return  _type;}
     bool Init(const json&) override;
     json Configuration() override;
-    std::weak_ptr<IUnit> Parent() override {return std::weak_ptr<IUnit>();}
+    IUnit* Parent() override {return _parent;}
     virtual std::vector<std::weak_ptr<IUnit>> Children() override {return std::vector<std::weak_ptr<IUnit>>();}
 
     json Connections() override;
@@ -42,7 +42,7 @@ namespace rf
     void SetEveventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)>)  override{}
 
   protected:
-    std::weak_ptr<IUnit> _parent;
+    IUnit* _parent;
     std::string _id;
     std::string _type;
     std::unique_ptr<Logger> logger;

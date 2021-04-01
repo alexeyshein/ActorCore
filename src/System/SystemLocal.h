@@ -40,7 +40,7 @@ namespace rf
     std::string Type() override {return std::string("SystemLocal");}
     bool Init(const json&) override;
     json Configuration() override {return Scheme();}
-    std::weak_ptr<IUnit> Parent() override {return parent;}
+    IUnit* Parent() override {return parent;}
     std::vector<std::weak_ptr<IUnit>> Children() override;
     std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string &) override {return std::monostate{};} 
     bool SetProperty(const std::string&, bool) override{ return true; }
@@ -56,6 +56,6 @@ namespace rf
     std::map<std::string, std::shared_ptr<IAbstractActor>> _mapActors;
     std::unique_ptr<Logger> logger;
     
-    std::weak_ptr<IUnit> parent;
+    IUnit* parent;
   };
 }

@@ -75,7 +75,7 @@ json ActorLocal::GetStatus()
 
 std::shared_ptr<IPort> ActorLocal::addPort(const std::string &typePort, const std::string &portId)
 {
-  std::shared_ptr<IPort> portPtr = rf::PortFactory::Create(typePort, portId);
+  std::shared_ptr<IPort> portPtr = rf::PortFactory::Create(typePort, portId, this);
   if (portPtr)
   {
     //portPtr->SetEveventOnReceive(std::bind(&ActorLocal::OnInputReceive, this, std::placeholders::_1, std::placeholders::_2));

@@ -5,7 +5,7 @@ using  rf::PortBase;
 using rf::Logger;
 using nlohmann::json;
 
-PortBase::PortBase(std::string id, std::weak_ptr<IUnit> parent):
+PortBase::PortBase(std::string id, IUnit* parent):
  _parent(parent)
 ,_id(id)
 , _type("PortBase")

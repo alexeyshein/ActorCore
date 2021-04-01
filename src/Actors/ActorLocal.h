@@ -18,7 +18,7 @@ namespace rf
     bool Init(const json&) override;
     json Configuration() override;
     json Connections() override;
-    std::weak_ptr<IUnit> Parent() override {return std::shared_ptr<IUnit>(nullptr);}
+    IUnit* Parent() override {return nullptr;}
     virtual std::vector<std::weak_ptr<IUnit>> Children() override {return std::vector<std::weak_ptr<IUnit>>();}
     std::vector<std::weak_ptr<IPort>> GetPorts() override;
     std::weak_ptr<IPort> GetPortById(const std::string& portId) override;

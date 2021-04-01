@@ -8,7 +8,7 @@ using rf::Logger;
 
 using nlohmann::json;
 
-PortOutput::PortOutput(std::string id, std::weak_ptr<IUnit> parent)
+PortOutput::PortOutput(std::string id, IUnit* parent)
     : rf::PortBase(id, parent)
 {
   _type = "PortOutput";

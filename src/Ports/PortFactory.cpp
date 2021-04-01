@@ -7,7 +7,7 @@
 
 using namespace rf;
 
-std::unique_ptr<IPort>  PortFactory::Create(std::string type, std::string id, std::weak_ptr<IUnit> parent)
+std::unique_ptr<IPort>  PortFactory::Create(std::string type, std::string id, IUnit* parent)
 {
 	std::unique_ptr<IPort> port(nullptr);
 	if (type == "Input")

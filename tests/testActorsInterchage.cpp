@@ -96,6 +96,6 @@ TEST_CASE("Actors Interchange", "test")
         actorBlock->Deactivate();
         actorEvent->Deactivate();
         REQUIRE(actorBlock->steps > 0);
-        REQUIRE(actorBlock->steps > 1.5*actorEvent->steps); // После удаления актора он должен перестать принимать
+        REQUIRE(actorBlock->steps > 1.4*actorEvent->steps); // После удаления актора он должен перестать принимать
     }
 }

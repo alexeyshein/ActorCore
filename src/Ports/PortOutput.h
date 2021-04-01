@@ -11,7 +11,7 @@ namespace rf
   class PortOutput : public virtual PortBase
   {
   public:
-    PortOutput(std::string id, std::weak_ptr<IUnit> parent = std::weak_ptr<IUnit>());
+    PortOutput(std::string id, IUnit* parent = nullptr);
     virtual ~PortOutput() = default;
 
     bool Init(const json&) override;
