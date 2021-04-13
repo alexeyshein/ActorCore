@@ -20,6 +20,11 @@ namespace rf
     json Configuration() override;
     IUnit* Parent() override {return _parent;}
     virtual std::vector<std::weak_ptr<IUnit>> Children() override {return std::vector<std::weak_ptr<IUnit>>();}
+   
+     // filters for the types of processed messages
+    const std::set<std::string>& TypesMessages() const override   {return  typesMessages;}
+    void SetTypesMessages(std::set<std::string>) override;
+
 
     json Connections() override;
     std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string&) override {return std::monostate{};};
@@ -46,6 +51,6 @@ namespace rf
     std::string _id;
     std::string _type;
     std::unique_ptr<Logger> logger;
-    
+    std::set<std::string> typesMessages;//
   };
 }

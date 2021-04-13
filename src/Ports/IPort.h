@@ -22,6 +22,10 @@ class IPort:public virtual IUnit
   virtual ~IPort()=default;
   virtual json Connections() = 0;
 
+  // filters for the types of processed messages
+  const virtual std::set<std::string>& TypesMessages() const = 0;
+  virtual void SetTypesMessages(std::set<std::string>) = 0;
+
   //for oututs specific
   virtual void Attach( const  std::string& remotePortOwnerId, std::weak_ptr<IPort>& ptrRemotePort) = 0;
 	virtual void Detach( const  std::string& remotePortOwnerId, std::weak_ptr<IPort>& ptrRemotePort) = 0;

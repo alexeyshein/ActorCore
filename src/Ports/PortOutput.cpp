@@ -77,6 +77,7 @@ void PortOutput::Attach(const  std::string& remotePortOwnerId, std::weak_ptr<IPo
   auto ptrRemotePort = ptrWeakRemotePort.lock();
   if(!ptrRemotePort)
     return;
+  //TODO add check by typesMessages
   std::size_t linkId = std::hash<std::string>{}(remotePortOwnerId+ptrRemotePort->Id());
   std::function<void(const std::shared_ptr<IMessage> &)> f = std::bind(&rf::IPort::Receive, ptrRemotePort.get(), std::placeholders::_1);
   publisher.Attach(linkId, f);
@@ -104,6 +105,7 @@ void PortOutput::Detach(const  std::string& remotePortOwnerId, const std::string
 void PortOutput::Notify(const std::shared_ptr<IMessage> &data)
 {
   logger->Telemetry(teleChannelIsNotifying, 1);
+  //TODO add check for compliance with data and typesMessages
   publisher.Notify(data);
   logger->Telemetry(teleChannelIsNotifying, 0);
 }

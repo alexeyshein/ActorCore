@@ -43,5 +43,10 @@ bool PortBase::Init(const json&)
 }
 
 
+void PortBase::SetTypesMessages(std::set<std::string> typesMessages_)
+{
+  typesMessages = typesMessages_;
+}
+
 
 
