@@ -65,7 +65,7 @@ Message<T>::Message(uint64_t id_, uint64_t timestamp_, const T &&data_)
 template< typename T > 
 void Message<T>::Set(uint64_t id_, uint64_t timestamp_, const T &data_)
 {
-  id = id_
+  id = id_;
   timestamp = timestamp_;
   data = data_;
 }
@@ -73,7 +73,7 @@ void Message<T>::Set(uint64_t id_, uint64_t timestamp_, const T &data_)
 template< typename T > 
 void Message<T>::Set(uint64_t id_, uint64_t timestamp_, const T &&data_)
 {
-  id = id_
+  id = id_;
   timestamp = timestamp_;
   data = data_;
 }

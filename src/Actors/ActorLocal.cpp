@@ -12,7 +12,7 @@ using nlohmann::json;
 
 ActorLocal::ActorLocal(const std::string &id) : _id(id), _type("ActorLocal"), logger(new Logger())
 {
-  logger->ConnectToShare();
+  logger->ConnectToShare( L"ActorSystem log client", L"Actor System Trace channel", L"Actor System Telemetry channel");
 }
 
 ActorLocal::~ActorLocal()
