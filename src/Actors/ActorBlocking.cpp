@@ -17,7 +17,9 @@ ActorBlocking::ActorBlocking(const std::string& id)
 {
 	_type = "ActorBlocking";
 	
-	std::wstring telemetryName{Logger::StrToWstr(id)+L"_isProcess"};
+	//std::wstring telemetryName{Logger::StrToWstr(id)+L"_isProcess"};
+	std::string telemetryName{ id + "_isProcess" };
+
     logger->CreateTelemetryChannel(telemetryName.c_str(), 0,-1,2,1,true, &teleChannelIsProcessing);
 }
 

@@ -86,9 +86,9 @@ class Logger
     public:
     Logger();
     ~Logger();
-    bool Create(std::wstring initParams, std::wstring traceInstanceName,std::wstring telemetryInstanceName);
-    bool Share(std::wstring clientShareName,std::wstring traceShareName,std::wstring telemetryShareName);
-    bool ConnectToShare(std::wstring clientShareName,std::wstring traceShareName,std::wstring telemetryShareName);
+    bool Create(std::string initParams, std::string traceInstanceName,std::string telemetryInstanceName);
+    bool Share(std::string clientShareName,std::string traceShareName,std::string telemetryShareName);
+    bool ConnectToShare(std::string clientShareName,std::string traceShareName,std::string telemetryShareName);
 
     void Telemetry(uint16_t tId, double value);
     bool CreateTelemetryChannel(const tXCHAR *i_pName, tDOUBLE i_dbMin,  tDOUBLE  i_dbAlarmMin, tDOUBLE  i_dbMax,

@@ -26,6 +26,7 @@ namespace rf
     virtual void Process(const std::string &portId, std::shared_ptr<IMessage> &dataPtr) = 0;
     
     void ProcessWrap(const std::string &portId, std::shared_ptr<IMessage> &dataPtr);
+
   private:
     void SanitizeQueue();
 

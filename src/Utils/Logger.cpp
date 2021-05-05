@@ -1,6 +1,6 @@
 #include "Logger.h"
 
-//#include <locale>
+#include <locale>
 #include <codecvt>
 
 using rf::Logger;
@@ -45,7 +45,7 @@ bool Logger::Trace( tUINT16            i_wTrace_ID, eP7Trace_Level  i_eLevel, IP
 }
 
 
-bool Logger::Create(std::wstring initParams, std::wstring traceInstanceName,std::wstring telemetryInstanceName)
+bool Logger::Create(std::string initParams, std::string traceInstanceName,std::string telemetryInstanceName)
 {
     Close();
 
@@ -65,7 +65,7 @@ bool Logger::Create(std::wstring initParams, std::wstring traceInstanceName,std:
     return true;
 }
 
-bool Logger::Share(std::wstring clientShareName,std::wstring traceShareName,std::wstring telemetryShareName)
+bool Logger::Share(std::string clientShareName,std::string traceShareName,std::string telemetryShareName)
 {
     if(!client)
       return false;
@@ -83,7 +83,7 @@ bool Logger::Share(std::wstring clientShareName,std::wstring traceShareName,std:
 }
 
 
-bool Logger::ConnectToShare(std::wstring clientShareName,std::wstring traceShareName,std::wstring telemetryShareName)
+bool Logger::ConnectToShare(std::string clientShareName,std::string traceShareName,std::string telemetryShareName)
 {
     Close();
     client.reset(P7_Get_Shared(clientShareName.c_str()));

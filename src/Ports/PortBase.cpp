@@ -11,7 +11,7 @@ PortBase::PortBase(std::string id, IUnit* parent):
 , _type("PortBase")
 , logger(new Logger())
 {
-  logger->ConnectToShare(L"ActorSystem log client", L"Actor System Trace channel", L"Actor System Telemetry channel");
+  logger->ConnectToShare("ActorSystem log client", "Actor System Trace channel", "Actor System Telemetry channel");
 }
 
 PortBase::~PortBase(){
@@ -29,7 +29,9 @@ json PortBase::Configuration()
 json PortBase::Connections()
 {
     json connections = json::array();
-    auto &mapExternals = this->IdentifiersOfNotifiable();
+    //auto &mapExternals = this->IdentifiersOfNotifiable(); TMP not work
+    auto mapExternals = this->IdentifiersOfNotifiable();
+
     for (const auto &[actorIdExternal, portIdExternal] : mapExternals)
     {
       connections.emplace_back(json({actorIdExternal, portIdExternal}));

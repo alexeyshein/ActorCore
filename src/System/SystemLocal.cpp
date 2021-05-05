@@ -21,8 +21,8 @@ logger(new Logger())
 {
   if(logger)
   {
-     logger->Create(std::wstring(L"/P7.Sink=Baical /P7.Addr=127.0.0.1"), L"Actor System Trace channel", L"Actor System Telemetry channel");
-     logger->Share(L"ActorSystem log client", L"Actor System Trace channel", L"Actor System Telemetry channel");
+     logger->Create("/P7.Sink=Baical /P7.Addr=127.0.0.1", "Actor System Trace channel", "Actor System Telemetry channel");
+     logger->Share("ActorSystem log client", "Actor System Trace channel", "Actor System Telemetry channel");
   }
     
 }

@@ -1,4 +1,5 @@
 #include "ActorEventBased.h"
+
 #include "Logger.h"
 
 using rf::ActorEventBased;
@@ -16,9 +17,12 @@ ActorEventBased::ActorEventBased(const std::string& id)
 {
     _type = "ActorEventBased" ;
 
-    std::wstring telemetryName{Logger::StrToWstr(id)+L"_activeTasks"};
+    //std::wstring telemetryName{Logger::StrToWstr(id)+L"_activeTasks"};
+    std::string telemetryName{id + "_activeTasks" };
     logger->CreateTelemetryChannel(telemetryName.c_str(), 0,-1,255,255,true, &teleChannelActiveTasks);
-    telemetryName = std::wstring{Logger::StrToWstr(id)+L"_isProcess"};
+    
+    //telemetryName = std::wstring{Logger::StrToWstr(id)+L"_isProcess"};
+    telemetryName = std::string{ id + "_isProcess" };
     logger->CreateTelemetryChannel(telemetryName.c_str(), 0,-1,2,1,true, &teleChannelIsProcessing);
 }
 
@@ -87,7 +91,8 @@ void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<
 	SanitizeQueue();
   if(isAsync)
   {
-    	myFutureQueue.emplace_back(std::async(std::launch::async, &ActorEventBased::ProcessWrap, this, portId, dataPtr));
+      auto testfuture = std::async(std::launch::async, &ActorEventBased::ProcessWrap, this, portId, std::ref(dataPtr));
+      myFutureQueue.emplace_back(std::move(testfuture));
       logger->Telemetry(teleChannelActiveTasks, myFutureQueue.size());
   }else
   {
@@ -95,7 +100,9 @@ void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<
   }
 } 
 
-void ActorEventBased::ProcessWrap(const std::string &portId, std::shared_ptr<IMessage> &dataPtr)
+
+
+void ActorEventBased::ProcessWrap(const std::string &portId, std::shared_ptr<rf::IMessage> &dataPtr)
 {
    logger->Telemetry(teleChannelIsProcessing, 1);
    Process(portId, dataPtr);

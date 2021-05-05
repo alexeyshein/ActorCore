@@ -14,8 +14,11 @@ PortOutput::PortOutput(std::string id, IUnit* parent)
   _type = "PortOutput";
   publisher.SetAsyncMode(true);
   publisher.SetAsyncQueueSize(0);
-
-  std::wstring telemetryName{Logger::StrToWstr(id)+L"_isNotifying"};
+  std::string idParent{""};
+  if(parent != nullptr)
+     idParent = parent->Id();
+  //std::wstring telemetryName{Logger::StrToWstr(idParent)+L"=>"+Logger::StrToWstr(id)+L"_isNotifying"};
+  std::string telemetryName{ idParent + "=>" + id + "_isNotifying" };
   logger->CreateTelemetryChannel(telemetryName.c_str(), 0,-1,2,1,true, &teleChannelIsNotifying);
 }
 
