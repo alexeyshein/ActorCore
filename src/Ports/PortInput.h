@@ -25,7 +25,8 @@ class PortInput: public virtual PortBase
   void SetEveventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)>)  override;
   
   SharedQueue<std::shared_ptr<IMessage>>& GetMessageQueueRef(){return _queuePtrData;} 
-  protected:
+  
+protected:
    bool isTrigger;
    SharedQueue<std::shared_ptr<IMessage>> _queuePtrData;
    std::function<void(std::string,std::shared_ptr<IMessage>)> functionOnRecive;

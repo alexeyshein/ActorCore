@@ -85,13 +85,18 @@ bool ActorEventBased::SetProperty(const std::string& propertyName, int value)
 
 void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<IMessage>& dataPtr)
 {
-  logger->TRACE(0, TM("%S received message ID:%i on input-> %S"),Id().c_str(),dataPtr->Id(), portId.c_str());
+  logger->TRACE(0, TM("%s received message ID:%i on input-> %s"),Id().c_str(),dataPtr->Id(), portId.c_str());
   if(!ApproveTask(portId, dataPtr))
     return;
 	SanitizeQueue();
   if(isAsync)
   {
-      auto testfuture = std::async(std::launch::async, &ActorEventBased::ProcessWrap, this, portId, std::ref(dataPtr));
+      auto testfuture = std::async(std::launch::async, [portId, dataPtr, this]()
+          {
+              auto dataSharedPtr = dataPtr;       //специально по значению, поскольку объект уже может быть удален к момнету начала обработки
+              this->ProcessWrap(portId, dataSharedPtr);
+          });
+      //auto testfuture = std::async(std::launch::async, &ActorEventBased::ProcessWrap, this, portId, std::ref(dataPtr));
       myFutureQueue.emplace_back(std::move(testfuture));
       logger->Telemetry(teleChannelActiveTasks, myFutureQueue.size());
   }else

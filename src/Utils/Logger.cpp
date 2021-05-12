@@ -45,7 +45,7 @@ bool Logger::Trace( tUINT16            i_wTrace_ID, eP7Trace_Level  i_eLevel, IP
 }
 
 
-bool Logger::Create(std::string initParams, std::string traceInstanceName,std::string telemetryInstanceName)
+bool Logger::Create(XSTRING initParams, XSTRING traceInstanceName, XSTRING telemetryInstanceName)
 {
     Close();
 
@@ -65,7 +65,7 @@ bool Logger::Create(std::string initParams, std::string traceInstanceName,std::s
     return true;
 }
 
-bool Logger::Share(std::string clientShareName,std::string traceShareName,std::string telemetryShareName)
+bool Logger::Share(XSTRING clientShareName, XSTRING traceShareName, XSTRING telemetryShareName)
 {
     if(!client)
       return false;
@@ -83,7 +83,7 @@ bool Logger::Share(std::string clientShareName,std::string traceShareName,std::s
 }
 
 
-bool Logger::ConnectToShare(std::string clientShareName,std::string traceShareName,std::string telemetryShareName)
+bool Logger::ConnectToShare(XSTRING clientShareName, XSTRING traceShareName, XSTRING telemetryShareName)
 {
     Close();
     client.reset(P7_Get_Shared(clientShareName.c_str()));

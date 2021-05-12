@@ -77,7 +77,22 @@
                                                                     __VA_ARGS__)
 ////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////
+//WINDOWS specific definitions & types
+#if defined(_WIN32) || defined(_WIN64)
+//Text marco, allow to use wchar_t automatically
+#define CHM(i_pStr)         L##i_pStr
+#define SM(str)             Logger::StrToWstr(str)
+#define XSTRING             std::wstring
 
+////////////////////////////////////////////////////////////////////////////////
+//LINUX specific definitions & types
+#elif defined(__linux__)
+//String marco, allow to use char automatically
+#define CHM(i_pStr)    i_pStr
+#define SM(str)        str
+#define XSTRING             std::string
+#endif
 
 
 namespace rf{
@@ -86,9 +101,9 @@ class Logger
     public:
     Logger();
     ~Logger();
-    bool Create(std::string initParams, std::string traceInstanceName,std::string telemetryInstanceName);
-    bool Share(std::string clientShareName,std::string traceShareName,std::string telemetryShareName);
-    bool ConnectToShare(std::string clientShareName,std::string traceShareName,std::string telemetryShareName);
+    bool Create(XSTRING initParams, XSTRING traceInstanceName, XSTRING telemetryInstanceName);
+    bool Share(XSTRING clientShareName, XSTRING traceShareName, XSTRING telemetryShareName);
+    bool ConnectToShare(XSTRING clientShareName, XSTRING traceShareName, XSTRING telemetryShareName);
 
     void Telemetry(uint16_t tId, double value);
     bool CreateTelemetryChannel(const tXCHAR *i_pName, tDOUBLE i_dbMin,  tDOUBLE  i_dbAlarmMin, tDOUBLE  i_dbMax,
