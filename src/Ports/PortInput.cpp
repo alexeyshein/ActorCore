@@ -12,7 +12,7 @@ PortInput::PortInput(std::string id, IUnit* parent)
 : PortBase(id, parent )
 , functionOnRecive(nullptr)
 , isTrigger(true)
-, _queuePtrData(0)
+, _queuePtrData(1)
 {
   _type = "PortInput";
   std::string idParent{""};

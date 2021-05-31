@@ -2,12 +2,11 @@
 
 #include <iostream>
 
-
-
 #include "IAbstractActor.h"
 #include "ActorFactoryCollection.hpp"
 #include "UidGenerator.hpp"
 #include "Logger.h"
+
 
 using nlohmann::json;
 using rf::ActorCreatorFunction;
@@ -15,6 +14,7 @@ using rf::IUnit;
 using rf::IAbstractActor;
 using rf::SystemLocal;
 using rf::Logger;
+
 
 SystemLocal::SystemLocal():
 logger(new Logger())
@@ -24,13 +24,15 @@ logger(new Logger())
      logger->Create("/P7.Sink=Baical /P7.Addr=192.168.2.81", "Actor Scheme Trace channel", "Actor Scheme Telemetry channel");
      logger->Share("ActorSystem log client", "Actor System Trace channel", "Actor System Telemetry channel");
   }
-    
 }
+
 
 SystemLocal::~SystemLocal()
 {
-
+    logger->client->Flush();
+    Clear();
 }
+
 
 bool SystemLocal::Init(const nlohmann::json &scheme)
 {
@@ -48,7 +50,7 @@ bool SystemLocal::Init(const nlohmann::json &scheme)
     auto actor = Spawn(actorJson);
     if (!actor.lock())
     {
-      logger->WARNING(0, TM("Actor wasn`t spawned:%S"),actorJson.dump().c_str());
+      logger->WARNING(0, TM("Actor wasn`t spawned:%s"),actorJson.dump().c_str());
       Clear();
       return false;
     }  
@@ -64,7 +66,7 @@ bool SystemLocal::Init(const nlohmann::json &scheme)
   {
       if(!Connect(connectionJson))
       {
-        logger->WARNING(0, TM("Connection problem %S"), connectionJson.dump().c_str());
+        logger->WARNING(0, TM("Connection problem %s"), connectionJson.dump().c_str());
         return false;
       }
   }
@@ -95,8 +97,10 @@ json SystemLocal::Scheme()
   return jsonScheme;
 }
 
+
 void SystemLocal::Clear()
 {
+  Deactivate();
   //_mapActors.clear();
   for (auto it = _mapActors.begin(); it != _mapActors.end();)
   {
@@ -105,6 +109,7 @@ void SystemLocal::Clear()
     it = _mapActors.erase(it);
   }
 }
+
 
 //by json
 std::weak_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor)
@@ -127,6 +132,7 @@ std::weak_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor)
   return actorPtr;
 }
 
+
 //by name
 std::weak_ptr<IAbstractActor> SystemLocal::Spawn(std::string typeName)
 {
@@ -137,6 +143,7 @@ std::weak_ptr<IAbstractActor> SystemLocal::Spawn(std::string typeName)
   return actorPtr;
 }
 
+
 bool SystemLocal::Attach(std::shared_ptr<IAbstractActor> actorPtr)
 {
   if (_mapActors.count(actorPtr->Id()) != 0)
@@ -144,6 +151,7 @@ bool SystemLocal::Attach(std::shared_ptr<IAbstractActor> actorPtr)
   _mapActors.emplace(std::make_pair(actorPtr->Id(), actorPtr));
   return true;
 }
+
 
 std::shared_ptr<IAbstractActor> SystemLocal::Detach(std::string id)
 {
@@ -158,6 +166,7 @@ std::shared_ptr<IAbstractActor> SystemLocal::Detach(std::string id)
   return actor;
 }
 
+
 //spawn copy of existing
 std::weak_ptr<IAbstractActor> SystemLocal::GetActorById(std::string id)
 {
@@ -169,6 +178,7 @@ std::weak_ptr<IAbstractActor> SystemLocal::GetActorById(std::string id)
   return std::weak_ptr<IAbstractActor>();
 }
 
+
 void SystemLocal::RegisterFactory(std::set<std::string> keySet, ActorCreatorFunction functor)
 {
   //FactoryAllActors::Register("key", funcor);
@@ -176,10 +186,12 @@ void SystemLocal::RegisterFactory(std::set<std::string> keySet, ActorCreatorFunc
                 [&](auto const &key) { ActorFactoryCollection::Register(key, functor); });
 }
 
+
 std::set<std::string> SystemLocal::GetRegisteredActorTypes()
 {
   return ActorFactoryCollection::getRegisteredTypes();
 }
+
 
 bool SystemLocal::Connect(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2)
 {
@@ -194,6 +206,7 @@ bool SystemLocal::Connect(std::string idActor1, std::string idPortActor1, std::s
   return actor2->ConnectTo(actor1, idPortActor1, idPortActor2);
   //actor2->
 }
+
 
 bool SystemLocal::Connect(json connection)
 {
@@ -227,6 +240,7 @@ void SystemLocal::Disconnect(std::string idActor1, std::string idPortActor1, std
       actor2->Disconnect(idActor1, port1, idPortActor2);
   }
 }
+
 
 void SystemLocal::Disconnect(json connection)
 {
@@ -265,6 +279,7 @@ void SystemLocal::Activate()
 {
   std::for_each(_mapActors.cbegin(), _mapActors.cend(),[](auto & recInMap){ recInMap.second->Activate(); });
 }
+
 
 void SystemLocal::Deactivate()
 {
