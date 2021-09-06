@@ -15,7 +15,7 @@ namespace rf
   class SystemLocal :public virtual IUnit
   {
   public:
-    SystemLocal();
+    SystemLocal(const std::string& LoggerInitParam="/P7.Sink=Null");
     virtual ~SystemLocal();
     json Scheme();
     void Clear();

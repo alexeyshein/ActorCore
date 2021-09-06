@@ -16,12 +16,12 @@ using rf::SystemLocal;
 using rf::Logger;
 
 
-SystemLocal::SystemLocal():
+SystemLocal::SystemLocal(const std::string& loggerInitParam):
 logger(new Logger())
 {
   if(logger)
   {
-     logger->Create("/P7.Sink=Baical /P7.Addr=192.168.2.81", "Actor Scheme Trace channel", "Actor Scheme Telemetry channel");
+     logger->Create(loggerInitParam, "Actor Scheme Trace channel", "Actor Scheme Telemetry channel");
      logger->Share("ActorSystem log client", "Actor System Trace channel", "Actor System Telemetry channel");
   }
 }
