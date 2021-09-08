@@ -48,7 +48,9 @@ json ActorLocal::Links()
     auto mapExternals = portInternal->IdentifiersOfNotifiable();
     for (const auto &[actorIdExternal, portIdExternal] : mapExternals)
     {
-      connections.emplace_back(json::array({_id, portIdInternal, actorIdExternal, portIdExternal}));
+      //connections.emplace_back(json::array({_id, portIdInternal, actorIdExternal, portIdExternal}));
+        connections.emplace_back(json{ {"idActorSrc", _id}, {"idPortSrc", portIdInternal}, {"idActorDst",actorIdExternal}, {"idPortDst",portIdExternal} });
+
     }
   }
   return connections;

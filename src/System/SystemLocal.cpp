@@ -212,10 +212,10 @@ bool SystemLocal::Connect(json connection)
 {
   try
   {
-    std::string idActor1 = connection.at(0).get<std::string>();
-    std::string idPortActor1 = connection.at(1).get<std::string>();
-    std::string idActor2 = connection.at(2).get<std::string>();
-    std::string idPortActor2 = connection.at(3).get<std::string>();
+    std::string idActor1 = connection["idActorSrc"].get<std::string>();
+    std::string idPortActor1 = connection["idPortSrc"].get<std::string>();
+    std::string idActor2 = connection["idActorDst"].get<std::string>();
+    std::string idPortActor2 = connection["idPortDst"].get<std::string>();
     return Connect(idActor1, idPortActor1, idActor2, idPortActor2);
   }
   catch (...)
@@ -246,10 +246,10 @@ void SystemLocal::Disconnect(json connection)
 {
   try
   {
-    std::string idActor1 = connection.at(0).get<std::string>();
-    std::string idPortActor1 = connection.at(1).get<std::string>();
-    std::string idActor2 = connection.at(2).get<std::string>();
-    std::string idPortActor2 = connection.at(3).get<std::string>();
+    std::string idActor1 = connection["idActorSrc"].get<std::string>();
+    std::string idPortActor1 = connection["idPortSrc"].get<std::string>();
+    std::string idActor2 = connection["idActorDst"].get<std::string>();
+    std::string idPortActor2 = connection["idPortDst"].get<std::string>();
     Disconnect(idActor1, idPortActor1, idActor2, idPortActor2);
   }
   catch (...)
