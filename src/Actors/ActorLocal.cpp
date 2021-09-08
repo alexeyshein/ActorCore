@@ -40,7 +40,7 @@ json ActorLocal::Configuration()
   };
 }
 
-json ActorLocal::Connections()
+json ActorLocal::Links()
 {
   json connections = json::array();
   for (const auto &[portIdInternal, portInternal] : _mapPorts)

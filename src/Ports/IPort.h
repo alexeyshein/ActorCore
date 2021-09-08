@@ -20,7 +20,7 @@ class IPort:public virtual IUnit
   public:
   //IPort(IAbstractActor *owner)
   virtual ~IPort()=default;
-  virtual json Connections() = 0;
+  virtual json Links() = 0;
 
   // filters for the types of processed messages
   const virtual std::set<std::string>& TypesMessages() const = 0;

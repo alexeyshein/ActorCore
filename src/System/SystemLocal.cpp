@@ -55,18 +55,18 @@ bool SystemLocal::Init(const nlohmann::json &scheme)
       return false;
     }  
   }
-  // Init Connections
-  auto const connectionsJson = scheme.find("connections");
-  if (connectionsJson == scheme.end())
+  // Init Links
+  auto const linksJson = scheme.find("links");
+  if (linksJson == scheme.end())
    {
-      logger->WARNING(0, TM("Connections Not Found"));
+      logger->WARNING(0, TM("Links Not Found"));
       return false;
    }
-  for (const auto &connectionJson : *connectionsJson)
+  for (const auto &linkJson : *linksJson)
   {
-      if(!Connect(connectionJson))
+      if(!Connect(linkJson))
       {
-        logger->WARNING(0, TM("Connection problem %s"), connectionJson.dump().c_str());
+        logger->WARNING(0, TM("Connection problem %s"), linkJson.dump().c_str());
         return false;
       }
   }
@@ -80,20 +80,20 @@ json SystemLocal::Scheme()
 {
   json jsonScheme{};
   auto jsonActors = json::array();
-  auto jsonConnections = json::array();
+  auto jsonLinks = json::array();
   for(const auto& [actorId, actor]:_mapActors)
   {
       jsonActors.emplace_back(actor->Configuration());
-      auto connections = actor->Connections();
+      auto links = actor->Links();
       //jsonConnections+=connections;
-      for(const auto &connection : connections)
+      for(const auto &link : links)
       {
-         jsonConnections.emplace_back(connection);
+         jsonLinks.emplace_back(link);
       }
       
   }
   jsonScheme["actors"] = jsonActors;
-  jsonScheme["connections"] = jsonConnections;
+  jsonScheme["links"] = jsonLinks;
   return jsonScheme;
 }
 

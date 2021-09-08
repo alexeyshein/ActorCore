@@ -26,7 +26,7 @@ namespace rf
     void SetTypesMessages(std::set<std::string>) override;
 
 
-    json Connections() override;
+    json Links() override;
     std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string&) override {return std::monostate{};};
     bool SetProperty(const std::string&, bool) override { return true; }
     bool SetProperty(const std::string&, int) override { return true; }

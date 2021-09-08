@@ -14,7 +14,7 @@ namespace rf
   public:
     virtual ~IAbstractActor() = default;
 
-    virtual json Connections() = 0;
+    virtual json Links() = 0;
     //Returns the ID of this actor.
 
     virtual std::vector<std::weak_ptr<IPort>> GetPorts() = 0;

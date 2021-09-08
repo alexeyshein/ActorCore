@@ -26,7 +26,7 @@ json PortBase::Configuration()
   };
 }
 
-json PortBase::Connections()
+json PortBase::Links()
 {
     json connections = json::array();
     //auto &mapExternals = this->IdentifiersOfNotifiable(); TMP not work
