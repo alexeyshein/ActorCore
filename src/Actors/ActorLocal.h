@@ -17,6 +17,8 @@ namespace rf
 
     bool Init(const json&) override;
     json Configuration() override;
+    json UserData() { return userData; }
+
     json Links() override;
     IUnit* Parent() override {return nullptr;}
     virtual std::vector<std::weak_ptr<IUnit>> Children() override {return std::vector<std::weak_ptr<IUnit>>();}
@@ -55,6 +57,6 @@ namespace rf
     bool _flagActive;
 
     std::unique_ptr<Logger> logger;
-
+    json userData;
   };
 }

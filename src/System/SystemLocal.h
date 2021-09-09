@@ -41,6 +41,7 @@ namespace rf
     std::string Type() override {return std::string("SystemLocal");}
     bool Init(const json&) override;
     json Configuration() override {return Scheme();}
+    json UserData() { return userData; }
     IUnit* Parent() override {return parent;}
     std::vector<std::weak_ptr<IUnit>> Children() override;
     std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string &) override {return std::monostate{};} 
@@ -58,5 +59,6 @@ namespace rf
     std::unique_ptr<Logger> logger;
     
     IUnit* parent;
+    json userData;
   };
 }

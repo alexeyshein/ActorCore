@@ -22,6 +22,8 @@ ActorLocal::~ActorLocal()
 
 bool ActorLocal::Init(const json &actorConfig)
 {
+    if (actorConfig.contains("userData"))
+        userData = actorConfig.at("userData");
   return true;
 }
 
@@ -37,6 +39,7 @@ json ActorLocal::Configuration()
       {"id", _id},
       {"type", _type},
       {"ports", portJson},
+      {"userData", userData},
   };
 }
 

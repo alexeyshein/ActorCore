@@ -94,6 +94,7 @@ json SystemLocal::Scheme()
   }
   jsonScheme["actors"] = jsonActors;
   jsonScheme["links"] = jsonLinks;
+  jsonScheme["userData"] = userData;
   return jsonScheme;
 }
 

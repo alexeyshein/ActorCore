@@ -23,6 +23,7 @@ json PortBase::Configuration()
      return {
       {"id", _id},
       {"type", _type},
+      {"userData", userData},
   };
 }
 
@@ -39,8 +40,10 @@ json PortBase::Links()
     return connections;
 }
 
-bool PortBase::Init(const json&) 
-{
+bool PortBase::Init(const json& config) 
+{  
+    if (config.contains("userData"))
+            userData = config.at("userData");
     return true;
 }
 

@@ -18,6 +18,8 @@ namespace rf
     std::string Type() override {return  _type;}
     bool Init(const json&) override;
     json Configuration() override;
+    json UserData() { return userData; }
+
     IUnit* Parent() override {return _parent;}
     virtual std::vector<std::weak_ptr<IUnit>> Children() override {return std::vector<std::weak_ptr<IUnit>>();}
    
@@ -52,5 +54,6 @@ namespace rf
     std::string _type;
     std::unique_ptr<Logger> logger;
     std::set<std::string> typesMessages;//
+    json userData;
   };
 }
