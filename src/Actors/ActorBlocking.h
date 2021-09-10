@@ -13,6 +13,7 @@ namespace rf
 		 ~ActorBlocking() override;
          //~ActorBlocking() = default;
 		bool Init(const json&) override;
+		json Configuration() override;
 
     	std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string &) override ;
     	bool SetProperty(const std::string&, int) override ;

@@ -31,12 +31,17 @@ bool ActorEventBased::Init(const json& config)
 {
   if(!ActorLocal::Init(config))
    return false;
-  if(config.contains("isAsync"))
-   if(config.at("isAsync").is_boolean())
-    isAsync = config.at("isAsync").get<bool>();
-  if(config.contains("queueSize"))
-   if(config.at("queueSize").is_number_integer())
-    myFutureQueue.setMaxSize(config.at("queueSize").get<int>());
+  if (config.contains("properties"))
+  {
+      const auto& properties = config.at("properties");
+      if (properties.contains("isAsync"))
+          if (properties.at("isAsync").is_boolean())
+              isAsync = properties.at("isAsync").get<bool>();
+      if (properties.contains("queueSize"))
+          if (properties.at("queueSize").is_number_integer())
+              myFutureQueue.setMaxSize(properties.at("queueSize").get<int>());
+  }
+
   
   return true;
 }
@@ -44,10 +49,11 @@ bool ActorEventBased::Init(const json& config)
 json ActorEventBased::Configuration()
 {
   auto config = ActorLocal::Configuration();
-  config["isAsync"] = isAsync;
+  auto& configProps = config["properies"];
+  configProps["isAsync"] = isAsync;
   if(isAsync)
   {
-    config["queueSize"] = myFutureQueue.size();
+      configProps["queueSize"] = myFutureQueue.size();
   }
   return  config;
 }

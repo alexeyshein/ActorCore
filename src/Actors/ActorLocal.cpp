@@ -40,6 +40,7 @@ json ActorLocal::Configuration()
       {"type", _type},
       {"ports", portJson},
       {"userData", userData},
+      {"userData", {}},
   };
 }
 
