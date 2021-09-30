@@ -13,13 +13,14 @@ public:
     static std::string TypeName(){ return std::string(typeName);}
 
     Message(uint64_t id = 0, uint64_t timestamp = 0);
-    Message(uint64_t id, uint64_t timestamp, const T&  data);
-    Message(uint64_t id, uint64_t timestamp, const T&& data);
+    Message(uint64_t id, uint64_t timestamp, uint16_t type,  const T&  data);
+    Message(uint64_t id, uint64_t timestamp, uint16_t type,  const T&& data);
     ~Message(){};
-    void Set(uint64_t id, uint64_t timestamp, const T&  data);
-    void Set(uint64_t id, uint64_t timestamp, const T&& data);
+    void Set(uint64_t id, uint64_t timestamp, uint16_t type, const T&  data);
+    void Set(uint64_t id, uint64_t timestamp, uint16_t type, const T&& data);
     uint64_t Id() const override { return id; }
     uint64_t Timestamp() const override { return timestamp; }
+    uint16_t Type() const override { return type; }
     std::string IdSender() const { return idSender; }
     std::string IdPortSender() const { return idPortSender; }
     void SetSender(const std::string& idSnd_, const std::string& idPortSnd) override { idSender = idSnd_; idPortSender = idPortSnd; }
@@ -34,6 +35,7 @@ private:
     static const char* typeName;//="Message";
     uint64_t id;
     uint64_t timestamp;
+    uint16_t type;
     std::string idSender;
     std::string idPortSender;
     //std::string typeName;
@@ -48,38 +50,43 @@ template< typename T  >
 Message<T>::Message(uint64_t id_, uint64_t timestamp_)
 : id(id_)
 , timestamp(timestamp_)
+, type(0)
 {
 }
 
 template< typename T > 
-Message<T>::Message(uint64_t id_, uint64_t timestamp_, const T& data_)
+Message<T>::Message(uint64_t id_, uint64_t timestamp_, uint16_t type_, const T& data_)
 : id(id_)
 , timestamp(timestamp_)
+, type(type_)
 , data(data_)
 {
 }
 
 template< typename T > 
-Message<T>::Message(uint64_t id_, uint64_t timestamp_, const T &&data_)
+Message<T>::Message(uint64_t id_, uint64_t timestamp_, uint16_t type_, const T &&data_)
 : id(id_)
 , timestamp(timestamp_)
+, type(type_)
 , data(std::move(data_))
 {
 }
 
 template< typename T > 
-void Message<T>::Set(uint64_t id_, uint64_t timestamp_, const T &data_)
+void Message<T>::Set(uint64_t id_, uint64_t timestamp_, uint16_t type_, const T &data_)
 {
   id = id_;
   timestamp = timestamp_;
+  type = type_;
   data = data_;
 }
 
 template< typename T > 
-void Message<T>::Set(uint64_t id_, uint64_t timestamp_, const T &&data_)
+void Message<T>::Set(uint64_t id_, uint64_t timestamp_, uint16_t type_, const T &&data_)
 {
   id = id_;
   timestamp = timestamp_;
+  type = type_;
   data = data_;
 }
 
