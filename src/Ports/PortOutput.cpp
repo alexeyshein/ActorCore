@@ -109,6 +109,11 @@ void PortOutput::Notify(const std::shared_ptr<IMessage> &data)
 {
   logger->Telemetry(teleChannelIsNotifying, 1);
   //TODO add check for compliance with data and typesMessages
+  auto* parent = this->Parent();
+  std::string parentId{ "-" };
+  if (parent != nullptr)
+      parentId = parent->Id();
+  data->SetSender(parentId, Id());
   publisher.Notify(data);
   logger->Telemetry(teleChannelIsNotifying, 0);
 }

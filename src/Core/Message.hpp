@@ -20,6 +20,9 @@ public:
     void Set(uint64_t id, uint64_t timestamp, const T&& data);
     uint64_t Id() const override { return id; }
     uint64_t Timestamp() const override { return timestamp; }
+    std::string IdSender() const { return idSender; }
+    std::string IdPortSender() const { return idPortSender; }
+    void SetSender(const std::string& idSnd_, const std::string& idPortSnd) override { idSender = idSnd_; idPortSender = idPortSnd; }
     T& DataRef()  { return data; }
     T* DataPtr()  { return &data;}
     const T& DataConstRef() const { return data; }
@@ -31,6 +34,8 @@ private:
     static const char* typeName;//="Message";
     uint64_t id;
     uint64_t timestamp;
+    std::string idSender;
+    std::string idPortSender;
     //std::string typeName;
     T data;
 };
