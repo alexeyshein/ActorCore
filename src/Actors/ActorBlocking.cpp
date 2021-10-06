@@ -50,6 +50,7 @@ json ActorBlocking::Configuration()
 
 bool ActorBlocking::SetProperties(const json& properties)
 {
+	ActorLocal::SetProperties(properties);
 	if (properties.contains("minLoopTimeMks"))
 		if (properties.at("minLoopTimeMks").is_number())
 			minLoopTimeMks = properties.at("minLoopTimeMks").get<size_t>();
