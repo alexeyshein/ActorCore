@@ -25,6 +25,7 @@ class IUnit
   virtual bool SetProperty(const std::string&, int) = 0;
   virtual bool SetProperty(const std::string&, double) = 0;
   virtual bool SetProperty(const std::string&, std::string) = 0;  
+  virtual bool SetProperties(const json&) = 0;
 
 };
 }

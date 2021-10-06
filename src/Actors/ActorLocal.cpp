@@ -27,6 +27,8 @@ bool ActorLocal::Init(const json &actorConfig)
   return true;
 }
 
+
+
 json ActorLocal::Configuration()
 {
   auto portJson = json::array();

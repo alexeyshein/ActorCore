@@ -31,15 +31,11 @@ ActorBlocking::ActorBlocking(const std::string& id)
 
 bool ActorBlocking::Init(const json& config)
 {
-
 	if(!ActorLocal::Init(config))
 		return false;
 	if (config.contains("properties"))
 	{
-		const auto& properties = config.at("properties");
-		if (properties.contains("minLoopTimeMks"))
-			if (properties.at("minLoopTimeMks").is_number())
-				minLoopTimeMks = properties.at("minLoopTimeMks").get<size_t>();
+		this->SetProperties(config.at("properties"));
 	}
 	return true;
 }
@@ -50,6 +46,14 @@ json ActorBlocking::Configuration()
 	auto& configProps = config["properies"];
 	configProps["minLoopTimeMks"] = minLoopTimeMks;
 	return  config;
+}
+
+bool ActorBlocking::SetProperties(const json& properties)
+{
+	if (properties.contains("minLoopTimeMks"))
+		if (properties.at("minLoopTimeMks").is_number())
+			minLoopTimeMks = properties.at("minLoopTimeMks").get<size_t>();
+	return true;
 }
 
 std::variant<std::monostate, bool, int, double, std::string> ActorBlocking::GetProperty(const std::string& propertyName)

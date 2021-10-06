@@ -34,6 +34,7 @@ namespace rf
     bool SetProperty(const std::string&, int) override { return true; }
     bool SetProperty(const std::string&, double) override { return true; }
     bool SetProperty(const std::string&, std::string) override { return true; }
+    bool SetProperties(const json&) override { return true; }
 
     void Attach( const  std::string& remotePortOwnerId, std::weak_ptr<IPort>& ptrRemotePort) override{}
 	  void Detach( const  std::string& remotePortOwnerId, std::weak_ptr<IPort>& ptrRemotePort) override{}

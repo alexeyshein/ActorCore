@@ -30,6 +30,9 @@ namespace rf
     bool SetProperty(const std::string&, int) override { return true; }
     bool SetProperty(const std::string&, double) override { return true; }
     bool SetProperty(const std::string&, std::string) override { return true; }
+    bool SetProperties(const json&) override { return true; }
+
+
     json GetStatus() override;
     
     virtual void OnInputReceive(const std::string&, std::shared_ptr<IMessage>&){};

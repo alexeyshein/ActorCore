@@ -14,9 +14,11 @@ namespace rf
     virtual ~ActorEventBased() = default;
     bool Init(const json &) override;
     json Configuration() override;
+    bool SetProperties(const json&) override;
     std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string &) override ;
     bool SetProperty(const std::string&, bool) override ;
     bool SetProperty(const std::string&, int) override ;
+
     virtual void OnInputReceive(const std::string &, std::shared_ptr<IMessage> &) final;
    
     void Activate() final {ActorLocal::Activate();}
