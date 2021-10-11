@@ -43,7 +43,7 @@ bool ActorEventBased::Init(const json& config)
 json ActorEventBased::Configuration()
 {
 	auto config = ActorLocal::Configuration();
-	auto& configProps = config["properies"];
+	auto& configProps = config["properties"];
 	configProps["isAsync"] = isAsync;
 	if (isAsync)
 	{

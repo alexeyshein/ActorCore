@@ -43,7 +43,7 @@ bool ActorBlocking::Init(const json& config)
 json ActorBlocking::Configuration()
 {
 	auto config = ActorLocal::Configuration();
-	auto& configProps = config["properies"];
+	auto& configProps = config["properties"];
 	configProps["minLoopTimeMks"] = minLoopTimeMks;
 	return  config;
 }
