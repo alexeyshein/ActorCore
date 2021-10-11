@@ -18,8 +18,8 @@ namespace rf
     std::string Type() override {return  _type;}
     bool Init(const json&) override;
     json Configuration() override;
-    json UserData() { return userData; }
-
+    json UserData() override { return userData; }
+    bool SetUserData(const json& ud) override { userData = ud; return true;}
     IUnit* Parent() override {return _parent;}
     virtual std::vector<std::weak_ptr<IUnit>> Children() override {return std::vector<std::weak_ptr<IUnit>>();}
    

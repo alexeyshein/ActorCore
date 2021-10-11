@@ -46,6 +46,13 @@ json ActorLocal::Configuration()
   };
 }
 
+bool ActorLocal::SetUserData(const json& newUserData)
+{
+    userData = newUserData;
+    return true;
+}
+
+
 json ActorLocal::Links()
 {
   json connections = json::array();

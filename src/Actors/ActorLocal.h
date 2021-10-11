@@ -17,6 +17,7 @@ namespace rf
 
     bool Init(const json&) override;
     json Configuration() override;
+    bool SetUserData(const json&) override;
     json UserData() { return userData; }
 
     json Links() override;
