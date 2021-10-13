@@ -24,8 +24,8 @@ namespace rf
     virtual std::vector<std::weak_ptr<IUnit>> Children() override {return std::vector<std::weak_ptr<IUnit>>();}
    
      // filters for the types of processed messages
-    const std::set<std::string>& TypesMessages() const override   {return  typesMessages;}
-    void SetTypesMessages(std::set<std::string>) override;
+    const std::set<uint16_t>& TypesMessages() const override   {return  typesMessages;}
+    void SetTypesMessages(const std::set<uint16_t>&) override;
 
 
     json Links() override;
@@ -54,7 +54,7 @@ namespace rf
     std::string _id;
     std::string _type;
     std::unique_ptr<Logger> logger;
-    std::set<std::string> typesMessages;//
+    std::set<uint16_t> typesMessages;//
     json userData;
   };
 }

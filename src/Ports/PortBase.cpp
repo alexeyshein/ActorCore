@@ -5,6 +5,7 @@ using  rf::PortBase;
 using rf::Logger;
 using nlohmann::json;
 
+
 PortBase::PortBase(std::string id, IUnit* parent):
  _parent(parent)
 ,_id(id)
@@ -18,11 +19,22 @@ PortBase::~PortBase(){
   
 };
 
+
+bool PortBase::Init(const json& config)
+{
+    if (config.contains("userData"))
+        userData = config.at("userData");
+    if (config.contains("dataTypes"))
+        typesMessages = config.at("dataTypes").get<std::set<uint16_t>>();
+    return true;
+}
+
 json PortBase::Configuration()
 {
      return {
       {"id", _id},
       {"type", _type},
+      {"dataTypes", typesMessages },
       {"userData", userData},
   };
 }
@@ -40,15 +52,11 @@ json PortBase::Links()
     return connections;
 }
 
-bool PortBase::Init(const json& config) 
-{  
-    if (config.contains("userData"))
-            userData = config.at("userData");
-    return true;
-}
 
 
-void PortBase::SetTypesMessages(std::set<std::string> typesMessages_)
+
+
+void PortBase::SetTypesMessages(const std::set<uint16_t>& typesMessages_)
 {
   typesMessages = typesMessages_;
 }
