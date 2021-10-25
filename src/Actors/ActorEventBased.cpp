@@ -47,7 +47,7 @@ json ActorEventBased::Configuration()
 	configProps["isAsync"] = isAsync;
 	if (isAsync)
 	{
-		configProps["queueSize"] = myFutureQueue.size();
+		configProps["queueSize"] = myFutureQueue.getMaxSize();
 	}
 	return  config;
 }
