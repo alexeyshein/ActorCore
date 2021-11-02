@@ -116,10 +116,16 @@ void SystemLocal::Clear()
 std::weak_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor)
 {
   std::shared_ptr<IAbstractActor> actorPtr = nullptr;
+
   try
   {
     std::string typeName = jsonActor["type"].get<std::string>();
-    std::string id = jsonActor["id"].get<std::string>();
+    
+    std::string id = UidGenerator::Generate(typeName);
+    if (jsonActor.contains("id"))
+        if (jsonActor.at("id").is_string())
+             id = jsonActor["id"].get<std::string>();
+
     actorPtr =  std::shared_ptr<IAbstractActor>(ActorFactoryCollection::Create(typeName, id));
     if(!actorPtr)
       return actorPtr;
