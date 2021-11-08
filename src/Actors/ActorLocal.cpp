@@ -10,7 +10,7 @@ using rf::Logger;
 
 using nlohmann::json;
 
-ActorLocal::ActorLocal(const std::string &id) : _id(id), _type("ActorLocal"), logger(new Logger())
+ActorLocal::ActorLocal(const std::string &id) : _id(id), _type("ActorLocal"), logger(new Logger()),_flagActive(true)
 {
   //logger->ConnectToShare(L"ActorSystem log client", L"Actor System Trace channel", L"Actor System Telemetry channel");
   logger->ConnectToShare( "ActorSystem log client", "Actor System Trace channel", "Actor System Telemetry channel");
