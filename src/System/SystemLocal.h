@@ -33,7 +33,7 @@ namespace rf
     void Disconnect(json);
     void Activate();
     void Deactivate();
-    
+    std::map<std::string, bool> ActorsActivationState();
     ///////////////////////////////////////////////////////////////
     //IUnit
     //////////////////////////////////////////////////////////////

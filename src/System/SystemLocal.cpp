@@ -70,6 +70,7 @@ bool SystemLocal::Init(const nlohmann::json &scheme)
         return false;
       }
   }
+  this->Activate();
   if(logger->trace)
     logger->INFO(0, TM("Actor System was Init successfully %d"), 0);
   return true;
@@ -291,6 +292,16 @@ void SystemLocal::Activate()
 void SystemLocal::Deactivate()
 {
     std::for_each(_mapActors.cbegin(), _mapActors.cend(),[](auto & recInMap){ recInMap.second->Deactivate(); });
+}
+
+std::map<std::string, bool> SystemLocal::ActorsActivationState()
+{
+    std::map<std::string, bool> activation;
+    for (auto [actorId, actor] : _mapActors)
+    {
+        activation[actorId] = actor->IsActive();
+    }
+    return activation;
 }
 
 
