@@ -40,5 +40,7 @@ namespace rf
     uint16_t      teleChannelActiveTasks;
     uint16_t      teleChannelIsProcessing;
 
+    std::mutex onInputTask;
+
   };
 }

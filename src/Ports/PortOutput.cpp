@@ -32,6 +32,7 @@ bool PortOutput::Init(const json& config)
   if(config.contains("queueNotifiersSize"))
    if(config.at("queueNotifiersSize").is_number_integer())
     publisher.SetAsyncQueueSize(config.at("queueNotifiersSize").get<int>());
+  return true;
 }
 
 json PortOutput::Configuration()

@@ -101,9 +101,11 @@ void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<
 	logger->TRACE(0, TM("%s received message ID:%i on input-> %s"), Id().c_str(), dataPtr->Id(), portId.c_str());
 	if (!ApproveTask(portId, dataPtr))
 		return;
-	SanitizeQueue();
+
 	if (isAsync)
 	{
+		std::lock_guard<std::mutex> lock(onInputTask);
+		SanitizeQueue();
 		auto testfuture = std::async(std::launch::async, [portId, dataPtr, this]()
 			{
 				auto dataSharedPtr = dataPtr;       //специально по значению, поскольку объект уже может быть удален к момнету начала обработки
