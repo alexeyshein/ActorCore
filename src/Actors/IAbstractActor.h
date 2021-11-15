@@ -21,6 +21,9 @@ namespace rf
 
     virtual std::weak_ptr<IPort> GetPortById(const std::string&) = 0;
 
+    virtual std::set<std::string> GetPortsIdSet() = 0;
+
+
     virtual bool ConnectTo(const std::string& actorIdExternal, std::weak_ptr<IPort>& portExternal, const std::string& portIdInternal) = 0;
 
     virtual bool ConnectTo(std::weak_ptr<IAbstractActor>& actorExternal, const std::string& portIdExternal, const std::string& portIdInternal) = 0;
