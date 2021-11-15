@@ -25,6 +25,7 @@ namespace rf
     virtual std::vector<std::weak_ptr<IUnit>> Children() override {return std::vector<std::weak_ptr<IUnit>>();}
     std::vector<std::weak_ptr<IPort>> GetPorts() override;
     std::weak_ptr<IPort> GetPortById(const std::string& portId) override;
+    std::set<std::string> GetPortsIdSet() final;
 
     std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string &) override {return std::monostate{};} 
     bool SetProperty(const std::string&, bool) override{ return true; }
@@ -52,6 +53,7 @@ namespace rf
     std::shared_ptr<IPort> addPort(const std::string& typePort, const std::string& portId);
     std::shared_ptr<IPort> addPort(const std::string& typePort);
     std::shared_ptr<IPort> addPort(const json&);
+    void deletePort(const std::string& portId);
     virtual void OnActivate(){};
     virtual void OnDeactivate(){};
     std::string _id;

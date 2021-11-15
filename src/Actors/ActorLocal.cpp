@@ -77,6 +77,17 @@ std::vector<std::weak_ptr<IPort>> ActorLocal::GetPorts()
   return ports;
 }
 
+
+std::set<std::string> ActorLocal::GetPortsIdSet()
+{
+    std::set<std::string> ports;
+    for (const auto& [portIdInternal, portInternal] : _mapPorts)
+        ports.insert(portIdInternal);
+    return ports;
+}
+
+
+
 json ActorLocal::GetStatus()
 {
   json res;
@@ -128,6 +139,24 @@ std::shared_ptr<IPort> ActorLocal::addPort(const json &portJson)
   }
   return port;
 }
+
+
+void ActorLocal::deletePort(const std::string& portId)
+{
+    auto portIt = _mapPorts.find(portId);
+    if (portIt == _mapPorts.end())
+        return ;
+
+    auto port = portIt->second;
+
+    //удалить связи
+    port->CleanObservers(); //Для OUT порта удаляем наблюдателей
+    //TODO надо как-то удалить все связи, которые оповещают инфой
+    
+    
+    _mapPorts.erase(portIt);
+}
+
 
 bool ActorLocal::ConnectTo(const std::string &actorIdExternal, std::weak_ptr<IPort> &portExternalWeakPtr, const std::string &portIdInternal)
 {
