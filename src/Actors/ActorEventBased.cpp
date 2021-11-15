@@ -143,6 +143,13 @@ void ActorEventBased::SanitizeQueue()
 			std::future_status status = front.wait_for(std::chrono::nanoseconds(40));
 			if (status == std::future_status::ready)
 			{
+				try { //catch exception from async task
+					front.get();
+				}
+				catch (const std::exception& e)
+				{
+					logger->WARNING(0, TM("%s Async task exception :%s"), Id().c_str(), e.what());
+				}
 				myFutureQueue.pop_front();
 				ready = true;
 				logger->Telemetry(teleChannelActiveTasks, myFutureQueue.size());
