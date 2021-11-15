@@ -9,7 +9,7 @@ namespace rf
   class ActorLocal : public IAbstractActor
   {
   public:
-    ActorLocal(const std::string& id); 
+    ActorLocal(const std::string& id, IUnit* parent = nullptr);
     virtual ~ActorLocal();
     //Returns the ID of this actor.
     std::string Id() override { return _id; }
@@ -21,7 +21,9 @@ namespace rf
     json UserData() { return userData; }
 
     json Links() override;
-    IUnit* Parent() override {return nullptr;}
+    IUnit* Parent() override {return _parent;}
+    void SetParent(IUnit* parent) override { _parent = parent; }
+
     virtual std::vector<std::weak_ptr<IUnit>> Children() override {return std::vector<std::weak_ptr<IUnit>>();}
     std::vector<std::weak_ptr<IPort>> GetPorts() override;
     std::weak_ptr<IPort> GetPortById(const std::string& portId) override;
@@ -56,6 +58,8 @@ namespace rf
     void deletePort(const std::string& portId);
     virtual void OnActivate(){};
     virtual void OnDeactivate(){};
+  protected:
+    IUnit* _parent;
     std::string _id;
     std::string _type;
     std::map<std::string, std::shared_ptr<IPort>> _mapPorts;

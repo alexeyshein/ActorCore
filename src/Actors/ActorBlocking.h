@@ -8,7 +8,7 @@ namespace rf
 	class ActorBlocking : public ActorLocal
 	{
 	public:
-		ActorBlocking(const std::string& id);
+		ActorBlocking(const std::string& id, IUnit* parent = nullptr);
 
 		 ~ActorBlocking() override;
          //~ActorBlocking() = default;

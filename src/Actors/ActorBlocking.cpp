@@ -11,8 +11,8 @@ using rf::Logger;
 
 using nlohmann::json;
 
-ActorBlocking::ActorBlocking(const std::string& id) 
-: ActorLocal(id)
+ActorBlocking::ActorBlocking(const std::string& id, IUnit* parent)
+	: ActorLocal(id, parent)
 , minLoopTimeMks(100)
 {
 	_type = "ActorBlocking";

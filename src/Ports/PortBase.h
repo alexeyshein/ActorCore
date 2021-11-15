@@ -21,6 +21,8 @@ namespace rf
     json UserData() override { return userData; }
     bool SetUserData(const json& ud) override { userData = ud; return true;}
     IUnit* Parent() override {return _parent;}
+    void SetParent(IUnit* parent) override { _parent = parent; }
+
     virtual std::vector<std::weak_ptr<IUnit>> Children() override {return std::vector<std::weak_ptr<IUnit>>();}
    
      // filters for the types of processed messages

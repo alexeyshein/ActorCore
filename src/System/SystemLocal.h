@@ -45,6 +45,8 @@ namespace rf
     bool SetUserData(const json& ud) override { userData = ud; return true; }
 
     IUnit* Parent() override {return parent;}
+    void SetParent(IUnit* parent) override { this->parent = parent; }
+
     std::vector<std::weak_ptr<IUnit>> Children() override;
     std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string &) override {return std::monostate{};} 
     bool SetProperty(const std::string&, bool) override{ return true; }

@@ -10,216 +10,230 @@ using rf::Logger;
 
 using nlohmann::json;
 
-ActorLocal::ActorLocal(const std::string &id) : _id(id), _type("ActorLocal"), logger(new Logger()),_flagActive(true)
+ActorLocal::ActorLocal(const std::string& id, IUnit* parent) :_parent(parent), _id(id), _type("ActorLocal"), logger(new Logger()), _flagActive(true)
 {
-  //logger->ConnectToShare(L"ActorSystem log client", L"Actor System Trace channel", L"Actor System Telemetry channel");
-  logger->ConnectToShare( "ActorSystem log client", "Actor System Trace channel", "Actor System Telemetry channel");
+	//logger->ConnectToShare(L"ActorSystem log client", L"Actor System Trace channel", L"Actor System Telemetry channel");
+	logger->ConnectToShare("ActorSystem log client", "Actor System Trace channel", "Actor System Telemetry channel");
 }
 
 ActorLocal::~ActorLocal()
 {
 }
 
-bool ActorLocal::Init(const json &actorConfig)
+bool ActorLocal::Init(const json& actorConfig)
 {
-    if (actorConfig.contains("userData"))
-        userData = actorConfig.at("userData");
-  return true;
+	if (actorConfig.contains("userData"))
+		userData = actorConfig.at("userData");
+	return true;
 }
 
 
 
 json ActorLocal::Configuration()
 {
-  auto portJson = json::array();
+	auto portJson = json::array();
 
-  for (const auto &[portIdInternal, portInternal] : _mapPorts)
-  {
-    portJson.emplace_back(portInternal->Configuration());
-  }
-  return json{
-      {"id", _id},
-      {"type", _type},
-      {"ports", portJson},
-      {"userData", userData},
-      {"userData", {}},
-  };
+	for (const auto& [portIdInternal, portInternal] : _mapPorts)
+	{
+		portJson.emplace_back(portInternal->Configuration());
+	}
+	return json{
+		{"id", _id},
+		{"type", _type},
+		{"ports", portJson},
+		{"userData", userData},
+		{"userData", {}},
+	};
 }
 
 bool ActorLocal::SetUserData(const json& newUserData)
 {
-    userData = newUserData;
-    return true;
+	userData = newUserData;
+	return true;
 }
 
 
 json ActorLocal::Links()
 {
-  json connections = json::array();
-  for (const auto &[portIdInternal, portInternal] : _mapPorts)
-  {
-    auto mapExternals = portInternal->IdentifiersOfNotifiable();
-    for (const auto &[actorIdExternal, portIdExternal] : mapExternals)
-    {
-      //connections.emplace_back(json::array({_id, portIdInternal, actorIdExternal, portIdExternal}));
-        connections.emplace_back(json{ {"idActorSrc", _id}, {"idPortSrc", portIdInternal}, {"idActorDst",actorIdExternal}, {"idPortDst",portIdExternal} });
+	json connections = json::array();
+	for (const auto& [portIdInternal, portInternal] : _mapPorts)
+	{
+		auto mapExternals = portInternal->IdentifiersOfNotifiable();
+		for (const auto& [actorIdExternal, portIdExternal] : mapExternals)
+		{
+			//connections.emplace_back(json::array({_id, portIdInternal, actorIdExternal, portIdExternal}));
+			connections.emplace_back(json{ {"idActorSrc", _id}, {"idPortSrc", portIdInternal}, {"idActorDst",actorIdExternal}, {"idPortDst",portIdExternal} });
 
-    }
-  }
-  return connections;
+		}
+	}
+	return connections;
 }
 
 std::vector<std::weak_ptr<IPort>> ActorLocal::GetPorts()
 {
-  std::vector<std::weak_ptr<IPort>> ports;
-  for (const auto &[portIdInternal, portInternal] : _mapPorts)
-    ports.push_back(portInternal);
-  return ports;
+	std::vector<std::weak_ptr<IPort>> ports;
+	for (const auto& [portIdInternal, portInternal] : _mapPorts)
+		ports.push_back(portInternal);
+	return ports;
 }
 
 
 std::set<std::string> ActorLocal::GetPortsIdSet()
 {
-    std::set<std::string> ports;
-    for (const auto& [portIdInternal, portInternal] : _mapPorts)
-        ports.insert(portIdInternal);
-    return ports;
+	std::set<std::string> ports;
+	for (const auto& [portIdInternal, portInternal] : _mapPorts)
+		ports.insert(portIdInternal);
+	return ports;
 }
 
 
 
 json ActorLocal::GetStatus()
 {
-  json res;
-  res["id"] = _id;
-  // res["Recived frames"] = recivedFramesByPeriod;
-  // recivedFramesByPeriod = 0;
-  // res["Processed frames"] = processedFramesByPeriod;
-  // processedFramesByPeriod = 0;
+	json res;
+	res["id"] = _id;
+	// res["Recived frames"] = recivedFramesByPeriod;
+	// recivedFramesByPeriod = 0;
+	// res["Processed frames"] = processedFramesByPeriod;
+	// processedFramesByPeriod = 0;
 
-  return res;
+	return res;
 }
 
-std::shared_ptr<IPort> ActorLocal::addPort(const std::string &typePort, const std::string &portId)
+std::shared_ptr<IPort> ActorLocal::addPort(const std::string& typePort, const std::string& portId)
 {
-  std::shared_ptr<IPort> portPtr = rf::PortFactory::Create(typePort, portId, this);
-  if (portPtr)
-  {
-    //portPtr->SetEveventOnReceive(std::bind(&ActorLocal::OnInputReceive, this, std::placeholders::_1, std::placeholders::_2));
-    // std::function<void(std::string,std::shared_ptr<IMessage>)> functionOnRecive;
-    portPtr->SetEveventOnReceive([&](std::string idPort, std::shared_ptr<IMessage> ptrData) {
-      if (this->_flagActive)
-        this->OnInputReceive(idPort, ptrData);
-    });
-    _mapPorts.emplace(std::make_pair(portPtr->Id(), portPtr));
-  }
-  return portPtr;
+	std::shared_ptr<IPort> portPtr = rf::PortFactory::Create(typePort, portId, this);
+	if (portPtr)
+	{
+		//portPtr->SetEveventOnReceive(std::bind(&ActorLocal::OnInputReceive, this, std::placeholders::_1, std::placeholders::_2));
+		// std::function<void(std::string,std::shared_ptr<IMessage>)> functionOnRecive;
+		portPtr->SetEveventOnReceive([&](std::string idPort, std::shared_ptr<IMessage> ptrData) {
+			if (this->_flagActive)
+				this->OnInputReceive(idPort, ptrData);
+			});
+		_mapPorts.emplace(std::make_pair(portPtr->Id(), portPtr));
+	}
+	return portPtr;
 }
 
-std::shared_ptr<IPort> ActorLocal::addPort(const std::string &typePort)
+std::shared_ptr<IPort> ActorLocal::addPort(const std::string& typePort)
 {
-  std::string portId = rf::UidGenerator::Generate(typePort);
-  return addPort(typePort, portId);
+	std::string portId = rf::UidGenerator::Generate(typePort);
+	return addPort(typePort, portId);
 }
 
-std::shared_ptr<IPort> ActorLocal::addPort(const json &portJson)
+std::shared_ptr<IPort> ActorLocal::addPort(const json& portJson)
 {
-  std::shared_ptr<IPort> port = nullptr;
-  try
-  {
-    std::string typePort = portJson.at("type").get<std::string>();
-    std::string portId = portJson.at("id").get<std::string>();
+	std::shared_ptr<IPort> port = nullptr;
+	try
+	{
+		std::string typePort = portJson.at("type").get<std::string>();
+		std::string portId = portJson.at("id").get<std::string>();
 
-    port = addPort(typePort, portId);
-    if (port)
-      port->Init(portJson);
-  }
-  catch (...)
-  {
-  }
-  return port;
+		port = addPort(typePort, portId);
+		if (port)
+			port->Init(portJson);
+	}
+	catch (...)
+	{
+	}
+	return port;
 }
 
 
 void ActorLocal::deletePort(const std::string& portId)
 {
-    auto portIt = _mapPorts.find(portId);
-    if (portIt == _mapPorts.end())
-        return ;
+	auto portIt = _mapPorts.find(portId);
+	if (portIt == _mapPorts.end())
+		return;
 
-    auto port = portIt->second;
+	auto port = portIt->second;
+	//удалить связи
+	port->CleanObservers(); //Для OUT порта удаляем наблюдателей
+	auto* parent = this->Parent();
+	if (parent)
+	{
+		auto children = parent->Children(); //все акторы
+		for (auto& child : children)
+		{
+			std::shared_ptr<IUnit> unit = child.lock();
+			if (unit)
+			{
+				IAbstractActor* actor = dynamic_cast<IAbstractActor*>(unit.get());
+				if (actor)
+				{
+					actor->DisconnectAll(Id(), portId); //для всех акторов схемы вызываем удаление связи с текущим портом
+				}
+			}
+		}
+	}
 
-    //удалить связи
-    port->CleanObservers(); //Для OUT порта удаляем наблюдателей
-    //TODO надо как-то удалить все связи, которые оповещают инфой
-    
-    
-    _mapPorts.erase(portIt);
+	_mapPorts.erase(portIt);
 }
 
 
-bool ActorLocal::ConnectTo(const std::string &actorIdExternal, std::weak_ptr<IPort> &portExternalWeakPtr, const std::string &portIdInternal)
+bool ActorLocal::ConnectTo(const std::string& actorIdExternal, std::weak_ptr<IPort>& portExternalWeakPtr, const std::string& portIdInternal)
 {
-  auto portInternalWeakPtr = GetPortById(portIdInternal);
-  auto portInternal = portInternalWeakPtr.lock();
-  if (!portInternal)
-    return false;
-  // можно не проверять тип порта, т.к. для входа Attach ничего не делает
-  // а лучше вызвать для входа и выхода сразу
-  auto portExternal = portExternalWeakPtr.lock();
-  if(!portExternal)
-    return false;
-  portExternal->Attach(_id, portInternalWeakPtr);
-  portInternal->Attach(actorIdExternal, portExternalWeakPtr);
-  return true;
+	auto portInternalWeakPtr = GetPortById(portIdInternal);
+	auto portInternal = portInternalWeakPtr.lock();
+	if (!portInternal)
+		return false;
+	// можно не проверять тип порта, т.к. для входа Attach ничего не делает
+	// а лучше вызвать для входа и выхода сразу
+	auto portExternal = portExternalWeakPtr.lock();
+	if (!portExternal)
+		return false;
+	portExternal->Attach(_id, portInternalWeakPtr);
+	portInternal->Attach(actorIdExternal, portExternalWeakPtr);
+	return true;
 }
 
-bool ActorLocal::ConnectTo(std::weak_ptr<IAbstractActor> &actorExternalWeakPtr, const std::string &portIdExternal, const std::string &portIdInternal)
+bool ActorLocal::ConnectTo(std::weak_ptr<IAbstractActor>& actorExternalWeakPtr, const std::string& portIdExternal, const std::string& portIdInternal)
 {
-  auto actorExternal = actorExternalWeakPtr.lock();
-  if(!actorExternal)
-   return false;
-  auto portExternal = actorExternal->GetPortById(portIdExternal);
-  if (!portExternal.lock())
-    return false;
+	auto actorExternal = actorExternalWeakPtr.lock();
+	if (!actorExternal)
+		return false;
+	auto portExternal = actorExternal->GetPortById(portIdExternal);
+	if (!portExternal.lock())
+		return false;
 
-  return ConnectTo(actorExternal->Id(), portExternal, portIdInternal);
+	return ConnectTo(actorExternal->Id(), portExternal, portIdInternal);
 }
 
-void ActorLocal::Disconnect(const std::string &actorIdExternal, std::weak_ptr<IPort> &portExternalWeakPtr, const std::string &portIdInternal)
+void ActorLocal::Disconnect(const std::string& actorIdExternal, std::weak_ptr<IPort>& portExternalWeakPtr, const std::string& portIdInternal)
 {
-  auto portInternalWeakPtr = GetPortById(portIdInternal);
-  auto portInternal = portInternalWeakPtr.lock();
-  if (!portInternal)
-    return;
-  // можно не проверять тип порта, т.к. для входа Attach ничего не делает
-  portInternal->Detach(actorIdExternal, portExternalWeakPtr);
-  auto portExternal = portExternalWeakPtr.lock();
-  if(!portExternal)
-     return;
-  portExternal->Detach(_id, portInternalWeakPtr);
+	auto portInternalWeakPtr = GetPortById(portIdInternal);
+	auto portInternal = portInternalWeakPtr.lock();
+	if (!portInternal)
+		return;
+	// можно не проверять тип порта, т.к. для входа Attach ничего не делает
+	portInternal->Detach(actorIdExternal, portExternalWeakPtr);
+	auto portExternal = portExternalWeakPtr.lock();
+	if (!portExternal)
+		return;
+	portExternal->Detach(_id, portInternalWeakPtr);
 }
 
-void ActorLocal::Disconnect(const std::string &actorIdExternal, const std::string &portIdExternal, const std::string &portIdInternal)
+void ActorLocal::Disconnect(const std::string& actorIdExternal, const std::string& portIdExternal, const std::string& portIdInternal)
 {
-  auto portInternal = GetPortById(portIdInternal).lock();
-  if (portInternal)
-    portInternal->Detach(actorIdExternal, portIdExternal);
+	auto portInternal = GetPortById(portIdInternal).lock();
+	if (portInternal)
+		portInternal->Detach(actorIdExternal, portIdExternal);
 }
 
-void ActorLocal::DisconnectAll(const std::string &actorIdExternal, const std::string &portIdExternal)
+void ActorLocal::DisconnectAll(const std::string& actorIdExternal, const std::string& portIdExternal)
 {
-  for (const auto &[portIdInternal, portInternal] : _mapPorts)
-  {
-    portInternal->Detach(actorIdExternal, portIdExternal);
-  }
+	for (const auto& [portIdInternal, portInternal] : _mapPorts)
+	{
+		portInternal->Detach(actorIdExternal, portIdExternal);
+	}
 }
 
-std::weak_ptr<IPort> ActorLocal::GetPortById(const std::string &portId)
+std::weak_ptr<IPort> ActorLocal::GetPortById(const std::string& portId)
 {
-  auto it = _mapPorts.find(portId);
-  if (it == _mapPorts.end())
-    return std::weak_ptr<IPort>();
+	auto it = _mapPorts.find(portId);
+	if (it == _mapPorts.end())
+		return std::weak_ptr<IPort>();
 
-  return it->second;
+	return it->second;
 }

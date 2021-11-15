@@ -54,6 +54,7 @@ bool SystemLocal::Init(const nlohmann::json &scheme)
       Clear();
       return false;
     }  
+    actor.lock()->SetParent(this);
   }
   // Init Links
   auto const linksJson = scheme.find("links");
@@ -157,6 +158,7 @@ bool SystemLocal::Attach(std::shared_ptr<IAbstractActor> actorPtr)
   if (_mapActors.count(actorPtr->Id()) != 0)
     return false;
   _mapActors.emplace(std::make_pair(actorPtr->Id(), actorPtr));
+  actorPtr->SetParent(this);
   return true;
 }
 
@@ -169,6 +171,7 @@ std::shared_ptr<IAbstractActor> SystemLocal::Detach(std::string id)
   {
     actor = it->second;
     this->RemoveAllConectionsWithActor(actor);
+    actor->SetParent(nullptr);
     it = _mapActors.erase(it);
   }
   return actor;

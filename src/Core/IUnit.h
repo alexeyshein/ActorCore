@@ -21,6 +21,7 @@ class IUnit
   virtual bool SetUserData(const json&) = 0;
 
   virtual IUnit* Parent() = 0;
+  virtual void SetParent(IUnit*) = 0;
   virtual std::vector<std::weak_ptr<IUnit>> Children() = 0;
   virtual std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string&) = 0;
   virtual bool SetProperty(const std::string&, bool) = 0;

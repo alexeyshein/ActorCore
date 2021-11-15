@@ -10,7 +10,7 @@ namespace rf
   class ActorEventBased : public ActorLocal
   {
   public:
-    ActorEventBased(const std::string &id);
+    ActorEventBased(const std::string &id, IUnit* parent = nullptr);
     virtual ~ActorEventBased() = default;
     bool Init(const json &) override;
     json Configuration() override;

@@ -9,8 +9,8 @@ using rf::Logger;
 
 using nlohmann::json;
 
-ActorEventBased::ActorEventBased(const std::string& id)
-	: ActorLocal(id)
+ActorEventBased::ActorEventBased(const std::string& id, IUnit* parent)
+	: ActorLocal(id, parent)
 	, myFutureQueue(255, ModeQueueFull::Nothing)
 	, isAsync(true)
 
