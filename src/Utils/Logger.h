@@ -62,7 +62,7 @@
                                                                   i_hModule,\
                                                                   __VA_ARGS__)
 
-#define ERROR_(i_hModule,  ...)            QERROR(0,\
+#define ERROR(i_hModule,  ...)            QERROR(0,\
                                                                   i_hModule,\
                                                                   __VA_ARGS__)
 

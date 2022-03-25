@@ -50,6 +50,8 @@ namespace rf
     void Activate() override {_flagActive = true;OnActivate();}
     void Deactivate() override {_flagActive = false;OnDeactivate();}
 
+    Logger* GetLogger() { return logger? logger.get():nullptr; }
+
   protected:
     //void Nottify();
     std::shared_ptr<IPort> addPort(const std::string& typePort, const std::string& portId);
