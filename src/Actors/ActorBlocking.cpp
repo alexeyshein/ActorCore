@@ -53,7 +53,15 @@ bool ActorBlocking::SetProperties(const json& properties)
 	ActorLocal::SetProperties(properties);
 	if (properties.contains("minLoopTimeMks"))
 		if (properties.at("minLoopTimeMks").is_number())
+		{
 			minLoopTimeMks = properties.at("minLoopTimeMks").get<size_t>();
+			if (this->IsActive()) // restart processing loop with new minLoopTimeMks
+			{
+				this->Deactivate();
+				this->Activate();
+			}
+		}
+			
 	return true;
 }
 
