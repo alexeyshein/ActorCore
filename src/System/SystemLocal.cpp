@@ -39,11 +39,11 @@ bool SystemLocal::Init(const nlohmann::json &scheme)
   Clear();
   // Init Actors
   const auto  actorsJson = scheme.find("actors");
+  bool res{ true };
   if (actorsJson == scheme.end())
    {
-      std::cerr << "Actors Not Found";
       logger->TRACE(0, TM("Actors Not Found"));
-      return false;
+      return true;
    }
   for (const auto &actorJson : *actorsJson)
   {
@@ -51,30 +51,38 @@ bool SystemLocal::Init(const nlohmann::json &scheme)
     if (!actor.lock())
     {
       logger->WARNING(0, TM("Actor wasn`t spawned:%s"),actorJson.dump().c_str());
-      Clear();
-      return false;
-    }  
-    actor.lock()->SetParent(this);
+      //Clear();
+      res = false;
+    }
+    else
+    {
+        actor.lock()->SetParent(this);
+    }
   }
   // Init Links
   auto const linksJson = scheme.find("links");
   if (linksJson == scheme.end())
    {
-      logger->WARNING(0, TM("Links Not Found"));
-      return false;
-   }
-  for (const auto &linkJson : *linksJson)
+      logger->TRACE(0, TM("Links Not Found"));
+  }
+  else
   {
-      if(!Connect(linkJson))
+      for (const auto& linkJson : *linksJson)
       {
-        logger->WARNING(0, TM("Connection problem %s"), linkJson.dump().c_str());
-        return false;
+          if (!Connect(linkJson))
+          {
+              logger->WARNING(0, TM("Connection problem %s"), linkJson.dump().c_str());
+              res = false;
+          }
       }
   }
-  this->Activate();
-  if(logger->trace)
-    logger->INFO(0, TM("Actor System was Init successfully %d"), 0);
-  return true;
+  //if(logger->trace)
+  if (res)
+  {
+      this->Activate();
+      logger->INFO(0, TM("Actor System was Init successfully %d"), 0);
+  }
+  return res;
 }
 
 

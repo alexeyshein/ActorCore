@@ -96,11 +96,13 @@ void ActorBlocking::Activate()
 }
 void ActorBlocking::Deactivate()
 {
-	ActorLocal::Deactivate();
     _flagStop = true;
 	//поток контроля состояния каналов
 	if (_processingLoopThread.joinable()) //Запущен?
 		_processingLoopThread.join();
+	//должен запускаться после останова loop
+	ActorLocal::Deactivate();
+
 	return ;
 }
 
