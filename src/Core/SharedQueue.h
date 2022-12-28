@@ -34,6 +34,7 @@ namespace rf
         size_t getMaxSize(){return maxSize;}
         void setModeFull(ModeQueueFull);
         ModeQueueFull getModeFull(){return modeFull;}
+        bool isFull() { return size() >= maxSize; }
         void clear();
 
         int  size();

@@ -106,13 +106,22 @@ void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<
 	{
 		std::lock_guard<std::mutex> lock(onInputTask);
 		SanitizeQueue();
-		auto testfuture = std::async(std::launch::async, [portId, dataPtr, this]()
-			{
-				auto dataSharedPtr = dataPtr;       //специально по значению, поскольку объект уже может быть удален к момнету начала обработки
-				this->ProcessWrap(portId, dataSharedPtr);
-			});
-		//auto testfuture = std::async(std::launch::async, &ActorEventBased::ProcessWrap, this, portId, std::ref(dataPtr));
-		myFutureQueue.emplace_back(std::move(testfuture));
+		if (myFutureQueue.isFull() && myFutureQueue.getModeFull() == ModeQueueFull::Nothing)
+		{
+			// ѕропускаем обработку ()
+			logger->DEBUG(0, TM("%s skip message ID:%i on input-> %s"), Id().c_str(), dataPtr->Id(), portId.c_str());
+		}
+		else
+		{
+			auto testfuture = std::async(std::launch::async, [portId, dataPtr, this]()
+				{
+					auto dataSharedPtr = dataPtr;       //специально по значению, поскольку объект уже может быть удален к момнету начала обработки
+					this->ProcessWrap(portId, dataSharedPtr);
+				});
+			//auto testfuture = std::async(std::launch::async, &ActorEventBased::ProcessWrap, this, portId, std::ref(dataPtr));
+			myFutureQueue.emplace_back(std::move(testfuture));
+		}
+
 		logger->Telemetry(teleChannelActiveTasks, myFutureQueue.size());
 	}
 	else
