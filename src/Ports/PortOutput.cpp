@@ -82,7 +82,7 @@ void PortOutput::Attach(const  std::string& remotePortOwnerId, std::weak_ptr<IPo
   if(!ptrRemotePort)
     return;
   //TODO add check by typesMessages
-  std::size_t linkId = std::hash<std::string>{}(remotePortOwnerId+ptrRemotePort->Id());
+  std::size_t linkId = CalculateLinkId(remotePortOwnerId, ptrRemotePort->Id());
   std::function<void(const std::shared_ptr<IMessage> &)> f = std::bind(&rf::IPort::Receive, ptrRemotePort.get(), std::placeholders::_1);
   publisher.Attach(linkId, f);
   setIdentifiersOfNotifiable.emplace(std::pair<std::string,std::string>(remotePortOwnerId, ptrRemotePort->Id()));
@@ -101,6 +101,7 @@ void PortOutput::Detach(const  std::string& remotePortOwnerId, const std::string
   std::size_t linkId = std::hash<std::string>{}(remotePortOwnerId+remotePortId);
   publisher.Detach(linkId);
   setIdentifiersOfNotifiable.erase(std::pair<std::string,std::string>(remotePortOwnerId, remotePortId));
+  RemoveLinkUserDataFromMap(remotePortOwnerId, remotePortId);
   // auto it = setIdentifiersOfNotifiable.find(std::pair<std::string,std::string>(remotePortOwnerId, remotePortId));
   // if(it!=setIdentifiersOfNotifiable.end())
   //   it = setIdentifiersOfNotifiable.erase(it);
@@ -119,3 +120,34 @@ void PortOutput::Notify(const std::shared_ptr<IMessage> &data)
   logger->Telemetry(teleChannelIsNotifying, 0);
 }
 
+std::size_t  PortOutput::CalculateLinkId(const  std::string& remotePortOwnerId, const std::string& remotePortId)
+{
+    std::size_t linkId = std::hash<std::string>{}(remotePortOwnerId + remotePortId);
+    return linkId;
+}
+
+void PortOutput::SetLinkUserData(const  std::string& remotePortOwnerId, const std::string& remotePortId, const json& userData)
+{
+    std::size_t linkId = CalculateLinkId(remotePortOwnerId, remotePortId);
+    linkUserData[linkId] = userData;
+}
+
+json PortOutput::GetLinkUserData(const  std::string& remotePortOwnerId, const std::string& remotePortId)
+{
+    std::size_t linkId = CalculateLinkId(remotePortOwnerId, remotePortId);
+    auto it = linkUserData.find(linkId);
+    if (it != linkUserData.end())
+    {
+        return it->second;
+    }
+    return {};
+}
+
+
+
+
+void PortOutput::RemoveLinkUserDataFromMap(const  std::string& remotePortOwnerId, const std::string& remotePortId)
+{
+    std::size_t linkId = CalculateLinkId(remotePortOwnerId, remotePortId);
+    linkUserData.erase(linkId);
+}

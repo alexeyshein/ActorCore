@@ -6,7 +6,7 @@
 #include "ActorFactoryCollection.hpp"
 #include "UidGenerator.hpp"
 #include "Logger.h"
-
+#include "PortOutput.h" //access for specific functions, like setLinkUserData
 
 using nlohmann::json;
 using rf::ActorCreatorFunction;
@@ -16,8 +16,9 @@ using rf::SystemLocal;
 using rf::Logger;
 
 
-SystemLocal::SystemLocal(const std::string& loggerInitParam):
-logger(new Logger())
+SystemLocal::SystemLocal(const std::string& loggerInitParam) :
+    logger(new Logger())
+    //, userData{ json({}) }
 {
   if(logger)
   {
@@ -75,6 +76,10 @@ bool SystemLocal::Init(const nlohmann::json &scheme)
               res = false;
           }
       }
+  }
+  if (scheme.contains("userData"))
+  {
+      userData = scheme.at("userData");
   }
   //if(logger->trace)
   if (res)
@@ -229,21 +234,29 @@ bool SystemLocal::Connect(std::string idActor1, std::string idPortActor1, std::s
 
 bool SystemLocal::Connect(json connection)
 {
+  bool res{ false };
   try
   {
     std::string idActor1 = connection["idActorSrc"].get<std::string>();
     std::string idPortActor1 = connection["idPortSrc"].get<std::string>();
     std::string idActor2 = connection["idActorDst"].get<std::string>();
     std::string idPortActor2 = connection["idPortDst"].get<std::string>();
-    return Connect(idActor1, idPortActor1, idActor2, idPortActor2);
+    res =  Connect(idActor1, idPortActor1, idActor2, idPortActor2);
+    if (res && connection.contains("userData"))
+    {
+        auto&  userData = connection.at("userData");
+        SetLinkUserData(idActor1, idPortActor1, idActor2, idPortActor2, userData);
+    }
   }
   catch (...)
   {
   }
-  return false;
+  return res;
 }
 
 
+
+//TODO 
 void SystemLocal::Disconnect(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2)
 {
   auto actor1 = GetActorById(idActor1).lock();
@@ -254,6 +267,7 @@ void SystemLocal::Disconnect(std::string idActor1, std::string idPortActor1, std
     if (port2.lock())
       actor1->Disconnect(idActor2, port2, idPortActor1);
 
+    //TODO проверить почему port1 берется с actor2
     auto port1 = actor2->GetPortById(idPortActor2);
     if (port1.lock())
       actor2->Disconnect(idActor1, port1, idPortActor2);
@@ -293,6 +307,39 @@ void SystemLocal::RemoveAllConectionsWithActor(std::weak_ptr<IAbstractActor> ptr
   }
 }
 
+
+void SystemLocal::SetLinkUserData(std::string idActorSrc, std::string idPortSrc, std::string idActorDst, std::string idPortDst, json userData)
+{
+    auto actor = GetActorById(idActorSrc).lock();
+    if (actor)
+    {
+        auto port = actor->GetPortById(idPortSrc).lock();
+        if (port)
+        {
+            if (PortOutput* portOut = dynamic_cast<PortOutput*>(port.get())) {
+                portOut->SetLinkUserData(idActorDst, idPortDst, userData);
+            }
+        }
+    }
+    return;
+}
+
+json SystemLocal::GetLinkUserData(std::string idActorSrc, std::string idPortSrc, std::string idActorDst, std::string idPortDst )
+{
+    json userData;
+    auto actor = GetActorById(idActorSrc).lock();
+    if (actor)
+    {
+        auto port = actor->GetPortById(idPortSrc).lock();
+        if (port)
+        {
+            if (PortOutput* portOut = dynamic_cast<PortOutput*>(port.get())) {
+                userData = portOut->GetLinkUserData(idActorDst, idPortDst);
+            }
+        }
+    }
+    return userData;
+}
 
 void SystemLocal::Activate()
 {

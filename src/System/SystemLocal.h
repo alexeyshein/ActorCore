@@ -31,6 +31,8 @@ namespace rf
     bool Connect(json);
     void Disconnect(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2);
     void Disconnect(json);
+    void SetLinkUserData(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2, json userData);
+    json GetLinkUserData(std::string idActorSrc, std::string idPortSrc, std::string idActorDst, std::string idPortDst);
     void Activate();
     void Deactivate();
     std::map<std::string, bool> ActorsActivationState();

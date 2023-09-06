@@ -3,6 +3,7 @@
 #include "UidGenerator.hpp"
 #include "PortFactory.h"
 #include "Logger.h"
+#include "PortOutput.h" //access for specific functions, like setLinkUserData
 
 using rf::ActorLocal;
 using rf::IPort;
@@ -61,9 +62,18 @@ json ActorLocal::Links()
 		auto mapExternals = portInternal->IdentifiersOfNotifiable();
 		for (const auto& [actorIdExternal, portIdExternal] : mapExternals)
 		{
-			//connections.emplace_back(json::array({_id, portIdInternal, actorIdExternal, portIdExternal}));
-			connections.emplace_back(json{ {"idActorSrc", _id}, {"idPortSrc", portIdInternal}, {"idActorDst",actorIdExternal}, {"idPortDst",portIdExternal} });
 
+			//connections.emplace_back(json::array({_id, portIdInternal, actorIdExternal, portIdExternal}));
+			json link{ {"idActorSrc", _id}, {"idPortSrc", portIdInternal}, {"idActorDst",actorIdExternal}, {"idPortDst",portIdExternal} };
+			if (rf::PortOutput* portOut = dynamic_cast<rf::PortOutput*>(portInternal.get()))
+			{
+				json userData = portOut->GetLinkUserData(actorIdExternal, portIdExternal);
+				if (!userData.empty())
+				{
+					link["userData"] = userData;
+				}
+			}		
+			connections.emplace_back(link);
 		}
 	}
 	return connections;
