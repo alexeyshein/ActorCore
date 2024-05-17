@@ -15,11 +15,11 @@ public:
     Message(uint64_t id = 0, uint64_t timestamp = 0);
     Message(uint64_t id, uint64_t timestamp, uint16_t type);
     Message(uint64_t id, uint64_t timestamp, uint16_t type,  const T&  data);
-    Message(uint64_t id, uint64_t timestamp, uint16_t type,  const T&& data);
+    Message(uint64_t id, uint64_t timestamp, uint16_t type,   T&& data);
     ~Message(){};
     IMessage* Copy() const override { return new Message<T>(*this); }
     void Set(uint64_t id, uint64_t timestamp, uint16_t type, const T&  data);
-    void Set(uint64_t id, uint64_t timestamp, uint16_t type, const T&& data);
+    void Set(uint64_t id, uint64_t timestamp, uint16_t type,  T&& data);
     uint64_t Id() const override { return id; }
     void SetId(uint64_t _id) override { id = _id; }
     uint64_t Timestamp() const override { return timestamp; }
@@ -77,7 +77,7 @@ Message<T>::Message(uint64_t id_, uint64_t timestamp_, uint16_t type_, const T& 
 }
 
 template< typename T > 
-Message<T>::Message(uint64_t id_, uint64_t timestamp_, uint16_t type_, const T &&data_)
+Message<T>::Message(uint64_t id_, uint64_t timestamp_, uint16_t type_, T &&data_)
 : id(id_)
 , timestamp(timestamp_)
 , type(type_)
@@ -95,7 +95,7 @@ void Message<T>::Set(uint64_t id_, uint64_t timestamp_, uint16_t type_, const T 
 }
 
 template< typename T > 
-void Message<T>::Set(uint64_t id_, uint64_t timestamp_, uint16_t type_, const T &&data_)
+void Message<T>::Set(uint64_t id_, uint64_t timestamp_, uint16_t type_,  T &&data_)
 {
   id = id_;
   timestamp = timestamp_;
