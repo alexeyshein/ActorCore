@@ -124,6 +124,7 @@ void SystemLocal::Clear()
     this->RemoveAllConectionsWithActor(actor);
     it = _mapActors.erase(it);
   }
+  userData = json::object();
 }
 
 
