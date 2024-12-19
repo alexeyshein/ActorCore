@@ -15,6 +15,8 @@ ActorLocal::ActorLocal(const std::string& id, IUnit* parent) :_parent(parent), _
 {
 	//logger->ConnectToShare(L"ActorSystem log client", L"Actor System Trace channel", L"Actor System Telemetry channel");
 	logger->ConnectToShare("ActorSystem log client", "Actor System Trace channel", "Actor System Telemetry channel");
+	label = id;
+	description = "";
 }
 
 ActorLocal::~ActorLocal()
@@ -23,6 +25,10 @@ ActorLocal::~ActorLocal()
 
 bool ActorLocal::Init(const json& actorConfig)
 {
+	if (actorConfig.contains("properties"))
+	{
+		this->SetProperties(actorConfig.at("properties"));
+	}
 	if (actorConfig.contains("userData"))
 		userData = actorConfig.at("userData");
 	return true;
@@ -38,13 +44,31 @@ json ActorLocal::Configuration()
 	{
 		portJson.emplace_back(portInternal->Configuration());
 	}
+	json properties = json({ {"label", label},
+			{"description", description} });
+
 	return json{
 		{"id", _id},
 		{"type", _type},
+		{"properties",properties},
 		{"ports", portJson},
 		{"userData", userData},
 		{"userData", {}},
 	};
+}
+
+bool ActorLocal::SetProperties(const json& properties)
+{
+	if (properties.contains("label"))
+		if (properties.at("label").is_string())
+			label = properties.at("label").get<std::string>();
+
+	if (properties.contains("description"))
+		if (properties.at("description").is_string())
+			description = properties.at("description").get<std::string>();
+
+	
+	return true;
 }
 
 bool ActorLocal::SetUserData(const json& newUserData)

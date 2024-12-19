@@ -34,7 +34,7 @@ namespace rf
     bool SetProperty(const std::string&, int) override { return true; }
     bool SetProperty(const std::string&, double) override { return true; }
     bool SetProperty(const std::string&, std::string) override { return true; }
-    bool SetProperties(const json&) override { return true; }
+    bool SetProperties(const json&) override;// { return true; }
 
 
     json GetStatus() override;
@@ -70,5 +70,8 @@ namespace rf
 
     std::unique_ptr<Logger> logger;
     json userData;
+    std::string label;
+    std::string description;
+
   };
 }

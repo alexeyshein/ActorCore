@@ -55,6 +55,8 @@ json ActorEventBased::Configuration()
 
 bool ActorEventBased::SetProperties(const json& properties)
 {
+	if (!ActorLocal::SetProperties(properties))
+		return false;
 	if (properties.contains("isAsync"))
 		if (properties.at("isAsync").is_boolean())
 			isAsync = properties.at("isAsync").get<bool>();
@@ -98,7 +100,7 @@ bool ActorEventBased::SetProperty(const std::string& propertyName, int value)
 
 void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<IMessage>& dataPtr)
 {
-	logger->TRACE(0, TM("%s received message ID:%i on input-> %s"), Id().c_str(), dataPtr->Id(), portId.c_str());
+	logger->TRACE(0, TM("%s received message ID:%lld on input-> %s"), Id().c_str(), dataPtr->Id(), portId.c_str());
 	if (!ApproveTask(portId, dataPtr))
 		return;
 
@@ -109,7 +111,7 @@ void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<
 		if (myFutureQueue.isFull() && myFutureQueue.getModeFull() == ModeQueueFull::Nothing)
 		{
 			// Пропускаем обработку ()
-			logger->DEBUG(0, TM("%s skip message ID:%i on input-> %s"), Id().c_str(), dataPtr->Id(), portId.c_str());
+			logger->DEBUG(0, TM("%s skip message ID:%lld on input-> %s"), Id().c_str(), dataPtr->Id(), portId.c_str());
 		}
 		else
 		{

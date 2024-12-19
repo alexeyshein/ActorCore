@@ -33,10 +33,10 @@ bool ActorBlocking::Init(const json& config)
 {
 	if(!ActorLocal::Init(config))
 		return false;
-	if (config.contains("properties"))
-	{
-		this->SetProperties(config.at("properties"));
-	}
+	//if (config.contains("properties"))
+	//{
+	//	this->SetProperties(config.at("properties"));
+	//}
 	return true;
 }
 
@@ -44,13 +44,15 @@ json ActorBlocking::Configuration()
 {
 	auto config = ActorLocal::Configuration();
 	auto& configProps = config["properties"];
+	//auto& configProps = config.at("properties").get_ref<json::object_t&>();
 	configProps["minLoopTimeMks"] = minLoopTimeMks;
 	return  config;
 }
 
 bool ActorBlocking::SetProperties(const json& properties)
 {
-	ActorLocal::SetProperties(properties);
+	if (!ActorLocal::SetProperties(properties))
+		return false;
 	if (properties.contains("minLoopTimeMks"))
 		if (properties.at("minLoopTimeMks").is_number())
 		{
