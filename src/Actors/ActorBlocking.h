@@ -2,6 +2,7 @@
 
 #include "ActorLocal.h"
 #include <thread>
+#include <mutex>
 
 namespace rf
 {
@@ -44,6 +45,8 @@ namespace rf
 		bool _flagStop;
 
 		size_t minLoopTimeMks;
+
+		std::mutex mutexActivateDeactivate;
 	private:
 	    // For Telemetry purpose
         uint16_t      teleChannelIsProcessing;

@@ -86,6 +86,7 @@ bool ActorBlocking::SetProperty(const std::string& propertyName, int value)
 
 void ActorBlocking::Activate()
 {
+	std::lock_guard<std::mutex>  lock(mutexActivateDeactivate);
 	ActorLocal::Activate();
   	_flagStop = false;
 	if (_processingLoopThread.joinable())
@@ -98,6 +99,7 @@ void ActorBlocking::Activate()
 }
 void ActorBlocking::Deactivate()
 {
+	std::lock_guard<std::mutex>  lock(mutexActivateDeactivate);
     _flagStop = true;
 	//поток контроля состояния каналов
 	if (_processingLoopThread.joinable()) //Запущен?
