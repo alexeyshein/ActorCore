@@ -26,19 +26,6 @@ ActorEventBased::ActorEventBased(const std::string& id, IUnit* parent)
 }
 
 
-bool ActorEventBased::Init(const json& config)
-{
-	if (!ActorLocal::Init(config))
-		return false;
-	if (config.contains("properties"))
-	{
-		//const auto& properties = config.at("properties");
-		this->SetProperties(config.at("properties"));
-	}
-
-	return true;
-}
-
 
 json ActorEventBased::Configuration()
 {

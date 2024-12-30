@@ -13,7 +13,7 @@ namespace rf
 
 		 ~ActorBlocking() override;
          //~ActorBlocking() = default;
-		bool Init(const json&) override;
+
 		json Configuration() override;
 		bool SetProperties(const json&) override;
 

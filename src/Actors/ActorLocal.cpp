@@ -25,12 +25,16 @@ ActorLocal::~ActorLocal()
 
 bool ActorLocal::Init(const json& actorConfig)
 {
+	logger->TRACE(0, TM("%s start init"), Id().c_str());
+
 	if (actorConfig.contains("properties"))
 	{
 		this->SetProperties(actorConfig.at("properties"));
 	}
 	if (actorConfig.contains("userData"))
 		userData = actorConfig.at("userData");
+	logger->DEBUG(0, TM("%s initialized"), Id().c_str());
+
 	return true;
 }
 

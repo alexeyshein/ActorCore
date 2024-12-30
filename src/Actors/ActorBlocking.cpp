@@ -29,16 +29,6 @@ ActorBlocking::ActorBlocking(const std::string& id, IUnit* parent)
 }
 
 
-bool ActorBlocking::Init(const json& config)
-{
-	if(!ActorLocal::Init(config))
-		return false;
-	//if (config.contains("properties"))
-	//{
-	//	this->SetProperties(config.at("properties"));
-	//}
-	return true;
-}
 
 json ActorBlocking::Configuration()
 {

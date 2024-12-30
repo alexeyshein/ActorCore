@@ -12,7 +12,6 @@ namespace rf
   public:
     ActorEventBased(const std::string &id, IUnit* parent = nullptr);
     virtual ~ActorEventBased() = default;
-    bool Init(const json &) override;
     json Configuration() override;
     bool SetProperties(const json&) override;
     std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string &) override ;
