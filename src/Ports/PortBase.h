@@ -16,6 +16,8 @@ namespace rf
     virtual ~PortBase();
     std::string Id() override { return _id; }
     std::string Type() override {return  _type;}
+    std::string Label() override { return label; }
+    void SetLabel(const std::string& lab) override { label = lab; }
     bool Init(const json&) override;
     json Configuration() override;
     json UserData() override { return userData; }
@@ -55,6 +57,7 @@ namespace rf
     IUnit* _parent;
     std::string _id;
     std::string _type;
+    std::string label;
     std::unique_ptr<Logger> logger;
     std::set<uint16_t> typesMessages;//
     json userData;

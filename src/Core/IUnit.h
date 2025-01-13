@@ -15,6 +15,8 @@ class IUnit
   virtual ~IUnit() = default;
   virtual std::string Id()  = 0;
   virtual std::string Type() = 0;//{return std::string("IUnit");};
+  virtual std::string Label() = 0;
+  virtual void SetLabel(const std::string&) = 0;
   virtual bool Init(const json&) = 0;
   virtual json Configuration() = 0;
   virtual json UserData() = 0;

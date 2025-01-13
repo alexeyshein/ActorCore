@@ -27,7 +27,9 @@ public:
     uint16_t Type() const override { return type; }
     std::string IdSender() const { return idSender; }
     std::string IdPortSender() const { return idPortSender; }
-    void SetSender(const std::string& idSnd_, const std::string& idPortSnd) override { idSender = idSnd_; idPortSender = idPortSnd; }
+    std::string LabelSender() const { return labelSender; }
+    void SetSender(const std::string& idSnd_, const std::string& idPortSnd, const std::string& labelSnd) override 
+            {        idSender = idSnd_; idPortSender = idPortSnd; labelSender = labelSnd; }
     T& DataRef()  { return data; }
     T* DataPtr()  { return &data;}
     const T& DataConstRef() const { return data; }
@@ -42,6 +44,7 @@ private:
     uint16_t type;
     std::string idSender;
     std::string idPortSender;
+    std::string labelSender;
     //std::string typeName;
     T data;
 };

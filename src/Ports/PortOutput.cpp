@@ -115,7 +115,10 @@ void PortOutput::Notify(const std::shared_ptr<IMessage> &data)
   std::string parentId{ "-" };
   if (parent != nullptr)
       parentId = parent->Id();
-  data->SetSender(parentId, Id());
+  std::string label{ parentId };
+  if (parent != nullptr)
+      label = parent->Label();
+  data->SetSender(parentId, Id(), label);
   publisher.Notify(data);
   logger->Telemetry(teleChannelIsNotifying, 0);
 }

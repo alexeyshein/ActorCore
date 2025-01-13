@@ -41,6 +41,9 @@ namespace rf
     //////////////////////////////////////////////////////////////
     std::string Id()  override {return std::string("SystemLocal");}
     std::string Type() override {return std::string("SystemLocal");}
+    std::string Label() override { return label; }
+    void SetLabel(const std::string& lab) override { label = lab; }
+
     bool Init(const json&) override;
     json Configuration() override {return Scheme();}
     json UserData() { return userData; }
@@ -64,7 +67,8 @@ namespace rf
   protected:
     std::map<std::string, std::shared_ptr<IAbstractActor>> _mapActors;
     std::unique_ptr<Logger> logger;
-    
+    std::string label;
+
     IUnit* parent;
     json userData;
   };

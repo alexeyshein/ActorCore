@@ -34,6 +34,7 @@ json PortBase::Configuration()
      return {
       {"id", _id},
       {"type", _type},
+      {"label", label},
       {"dataTypes", typesMessages },
       {"userData", userData},
   };

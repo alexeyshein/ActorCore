@@ -16,7 +16,8 @@ struct IMessage
   virtual uint16_t Type() const { return 0; }
   virtual std::string IdSender() const { return ""; }
   virtual std::string IdPortSender() const { return ""; }
-  virtual void SetSender(const std::string& idSnd_, const std::string& idPortSnd) { return; }
+  virtual std::string LabelSender() const { return ""; }
+  virtual void SetSender(const std::string& idSnd_, const std::string& idPortSnd, const std::string& labelSnd) { return; }
 
 };
 }

@@ -13,7 +13,9 @@ namespace rf
     virtual ~ActorLocal();
     //Returns the ID of this actor.
     std::string Id() override { return _id; }
-    std::string Type() {return  _type;}
+    std::string Type() override {return  _type;}
+    std::string Label() override { return label; }
+    void SetLabel(const std::string& lab) override { label = lab; }
 
     bool Init(const json&) override;
     json Configuration() override;
@@ -64,13 +66,13 @@ namespace rf
     IUnit* _parent;
     std::string _id;
     std::string _type;
+    std::string label;
     std::map<std::string, std::shared_ptr<IPort>> _mapPorts;
     //Флаг активации актора
     bool _flagActive;
 
     std::unique_ptr<Logger> logger;
     json userData;
-    std::string label;
     std::string description;
 
   };

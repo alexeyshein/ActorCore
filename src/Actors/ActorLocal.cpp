@@ -54,6 +54,7 @@ json ActorLocal::Configuration()
 	return json{
 		{"id", _id},
 		{"type", _type},
+		{"label", label},
 		{"properties",properties},
 		{"ports", portJson},
 		{"userData", userData},
