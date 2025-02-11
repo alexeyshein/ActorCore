@@ -4,6 +4,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <mutex>
 
 #include "IAbstractActor.h"
 
@@ -68,7 +69,7 @@ namespace rf
     std::map<std::string, std::shared_ptr<IAbstractActor>> _mapActors;
     std::unique_ptr<Logger> logger;
     std::string label;
-
+    std::mutex mutexScheme;
     IUnit* parent;
     json userData;
   };

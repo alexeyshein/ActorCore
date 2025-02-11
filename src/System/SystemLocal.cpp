@@ -39,6 +39,7 @@ bool SystemLocal::Init(const nlohmann::json &scheme)
 {
   Clear();
   // Init Actors
+  std::lock_guard<std::mutex> lock(mutexScheme);
   const auto  actorsJson = scheme.find("actors");
   bool res{ true };
   if (actorsJson == scheme.end())
@@ -96,6 +97,7 @@ json SystemLocal::Scheme()
   json jsonScheme{};
   auto jsonActors = json::array();
   auto jsonLinks = json::array();
+  std::lock_guard<std::mutex> lock(mutexScheme);
   for(const auto& [actorId, actor]:_mapActors)
   {
       jsonActors.emplace_back(actor->Configuration());
@@ -118,6 +120,7 @@ void SystemLocal::Clear()
 {
   Deactivate();
   //_mapActors.clear();
+  std::lock_guard<std::mutex> lock(mutexScheme);
   for (auto it = _mapActors.begin(); it != _mapActors.end();)
   {
     auto actor = it->second;
@@ -169,6 +172,8 @@ std::weak_ptr<IAbstractActor> SystemLocal::Spawn(std::string typeName)
 
 bool SystemLocal::Attach(std::shared_ptr<IAbstractActor> actorPtr)
 {
+ // std::lock_guard<std::mutex> lock(mutexScheme);
+
   if (_mapActors.count(actorPtr->Id()) != 0)
     return false;
   _mapActors.emplace(std::make_pair(actorPtr->Id(), actorPtr));
@@ -180,6 +185,7 @@ bool SystemLocal::Attach(std::shared_ptr<IAbstractActor> actorPtr)
 std::shared_ptr<IAbstractActor> SystemLocal::Detach(std::string id)
 {
   std::shared_ptr<IAbstractActor> actor{nullptr};
+ // std::lock_guard<std::mutex> lock(mutexScheme);
   auto it = _mapActors.find(id);
   if (it != _mapActors.end())
   {
