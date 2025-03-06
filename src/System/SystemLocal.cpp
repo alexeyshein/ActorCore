@@ -39,7 +39,7 @@ bool SystemLocal::Init(const nlohmann::json &scheme)
 {
   Clear();
   // Init Actors
-  std::lock_guard<std::mutex> lock(mutexScheme);
+  //std::lock_guard<std::mutex> lock(mutexScheme);
   const auto  actorsJson = scheme.find("actors");
   bool res{ true };
   if (actorsJson == scheme.end())
@@ -97,7 +97,7 @@ json SystemLocal::Scheme()
   json jsonScheme{};
   auto jsonActors = json::array();
   auto jsonLinks = json::array();
-  std::lock_guard<std::mutex> lock(mutexScheme);
+  //std::lock_guard<std::mutex> lock(mutexScheme);
   for(const auto& [actorId, actor]:_mapActors)
   {
       jsonActors.emplace_back(actor->Configuration());
@@ -120,7 +120,7 @@ void SystemLocal::Clear()
 {
   Deactivate();
   //_mapActors.clear();
-  std::lock_guard<std::mutex> lock(mutexScheme);
+  //std::lock_guard<std::mutex> lock(mutexScheme);
   for (auto it = _mapActors.begin(); it != _mapActors.end();)
   {
     auto actor = it->second;
