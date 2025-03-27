@@ -209,6 +209,16 @@ std::weak_ptr<IAbstractActor> SystemLocal::GetActorById(std::string id)
   return std::weak_ptr<IAbstractActor>();
 }
 
+std::weak_ptr<IAbstractActor> SystemLocal::GetActorByLabel(std::string label)
+{
+    for (const auto& pair : _mapActors) {
+        const auto& actor = pair.second; // Получаем указатель на IAbstractActor
+        if (actor && actor->Label() == label) {
+            return actor; 
+        }
+    }
+    return std::weak_ptr<IAbstractActor>();
+}
 
 void SystemLocal::RegisterFactory(std::set<std::string> keySet, ActorCreatorFunction functor)
 {

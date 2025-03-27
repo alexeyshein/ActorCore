@@ -23,6 +23,7 @@ namespace rf
     std::weak_ptr<IAbstractActor> Spawn(json);        //spawn one actor
     std::weak_ptr<IAbstractActor> Spawn(std::string); //by name
     std::weak_ptr<IAbstractActor> GetActorById(std::string);
+    std::weak_ptr<IAbstractActor> GetActorByLabel(std::string);
     bool Attach(std::shared_ptr<IAbstractActor> pointer);
     std::shared_ptr<IAbstractActor> Detach(std::string id);
     void RegisterFactory(std::set<std::string>, ActorCreatorFunction);
