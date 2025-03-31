@@ -28,17 +28,18 @@ class IPort:public virtual IUnit
 
   //for oututs specific
   virtual void Attach( const  std::string& remotePortOwnerId, std::weak_ptr<IPort>& ptrRemotePort) = 0;
-	virtual void Detach( const  std::string& remotePortOwnerId, std::weak_ptr<IPort>& ptrRemotePort) = 0;
+  virtual void Detach( const  std::string& remotePortOwnerId, std::weak_ptr<IPort>& ptrRemotePort) = 0;
   virtual void Detach( const  std::string& remotePortOwnerId, const std::string& remotePortId)  = 0;
-
-	virtual void Notify(const std::shared_ptr<IMessage> &data) = 0;
+  virtual void Notify(const std::shared_ptr<IMessage> &data) = 0;
   virtual std::set<std::pair<std::string, std::string>>  IdentifiersOfNotifiable() =0;
-	virtual size_t NumObservers() = 0;
-	virtual void CleanObservers() = 0;
+  virtual size_t NumObservers() = 0;
+  virtual void CleanObservers() = 0;
+  virtual void SetEventOnAttach(std::function<void(std::string, std::string, std::string)>) = 0; //portId, remotePortOwnerId, remotePortId
 
+  
   //for inputs specific
   virtual void Receive(std::shared_ptr<IMessage> data) = 0;
-  virtual void SetEveventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)>) = 0;
+  virtual void SetEventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)>) = 0;
 };
 }
 

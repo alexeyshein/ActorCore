@@ -122,7 +122,7 @@ void PortInput::Receive(std::shared_ptr<IMessage> dataPtr)
      functionOnRecive(_id, dataPtr);
 }
 
-void PortInput::SetEveventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)> func)
+void PortInput::SetEventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)> func)
 {
    functionOnRecive = func;
 }

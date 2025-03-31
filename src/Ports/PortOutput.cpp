@@ -10,6 +10,7 @@ using nlohmann::json;
 
 PortOutput::PortOutput(std::string id, IUnit* parent)
     : rf::PortBase(id, parent)
+    , functionOnAttach{nullptr}
 {
   _type = "PortOutput";
   publisher.SetAsyncMode(true);
@@ -86,6 +87,9 @@ void PortOutput::Attach(const  std::string& remotePortOwnerId, std::weak_ptr<IPo
   std::function<void(const std::shared_ptr<IMessage> &)> f = std::bind(&rf::IPort::Receive, ptrRemotePort.get(), std::placeholders::_1);
   publisher.Attach(linkId, f);
   setIdentifiersOfNotifiable.emplace(std::pair<std::string,std::string>(remotePortOwnerId, ptrRemotePort->Id()));
+
+  if (functionOnAttach)
+      functionOnAttach(this->Id(), remotePortOwnerId, ptrRemotePort->Id());
 }
 
 void PortOutput::Detach(const  std::string& remotePortOwnerId, std::weak_ptr<IPort>& ptrWeakRemotePort)
@@ -153,4 +157,9 @@ void PortOutput::RemoveLinkUserDataFromMap(const  std::string& remotePortOwnerId
 {
     std::size_t linkId = CalculateLinkId(remotePortOwnerId, remotePortId);
     linkUserData.erase(linkId);
+}
+
+void PortOutput::SetEventOnAttach(std::function<void(std::string, std::string, std::string)> func)
+{
+    functionOnAttach = func;
 }

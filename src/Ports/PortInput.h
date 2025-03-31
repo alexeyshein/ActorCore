@@ -22,7 +22,7 @@ class PortInput: public virtual PortBase
   bool SetProperty(const std::string&, std::string) override;
 
   void Receive(std::shared_ptr<IMessage> data) override;
-  void SetEveventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)>)  override;
+  void SetEventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)>)  override;
   
   SharedQueue<std::shared_ptr<IMessage>>& GetMessageQueueRef(){return _queuePtrData;} 
   

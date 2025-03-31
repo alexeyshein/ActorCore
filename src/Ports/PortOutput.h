@@ -29,6 +29,7 @@ namespace rf
     std::set<std::pair<std::string, std::string>>  IdentifiersOfNotifiable() override {return setIdentifiersOfNotifiable;}
     size_t NumObservers() override {return publisher.NumObservers();} 
 	void CleanObservers() override {publisher.CleanObservers();} 
+    void SetEventOnAttach(std::function<void(std::string, std::string, std::string)>) override;
 
     void SetAsyncMode(bool async){publisher.SetAsyncMode(async);}
 	bool IsAsyncMode(){return publisher.IsAsyncMode();}
@@ -49,6 +50,7 @@ namespace rf
     std::map<std::size_t,json>  linkUserData;
     //For Telemetry Purpose
     uint16_t      teleChannelIsNotifying;
+    std::function<void(std::string, std::string, std::string)> functionOnAttach; //portId, remotePortOwnerId, remotePortId
 
   };
 }

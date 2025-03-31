@@ -48,10 +48,11 @@ namespace rf
 	  size_t NumObservers() override{return 0;}
 	  void CleanObservers() override{}
     std::set<std::pair<std::string, std::string>>  IdentifiersOfNotifiable() override {return std::set<std::pair<std::string, std::string>>();}
+    void SetEventOnAttach(std::function<void(std::string, std::string, std::string)>) override {} 
 
     //for inputs specific
     void Receive(std::shared_ptr<IMessage> data) override{}
-    void SetEveventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)>)  override{}
+    void SetEventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)>)  override{}
 
   protected:
     IUnit* _parent;
