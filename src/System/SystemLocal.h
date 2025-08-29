@@ -19,11 +19,16 @@ namespace rf
     SystemLocal(const std::string& LoggerInitParam="/P7.Sink=Null");
     virtual ~SystemLocal();
     json Scheme();
+    json Links();
     void Clear();
     std::weak_ptr<IAbstractActor> Spawn(json);        //spawn one actor
     std::weak_ptr<IAbstractActor> Spawn(std::string); //by name
+    std::weak_ptr<IAbstractActor> Clone(const std::string& id, bool withLinks = false); //clone one by id
+    json Clone(const std::vector<std::string>& ids, bool withLinks = false); //clone one by id
+
     std::weak_ptr<IAbstractActor> GetActorById(std::string);
     std::weak_ptr<IAbstractActor> GetActorByLabel(std::string);
+
     bool Attach(std::shared_ptr<IAbstractActor> pointer);
     std::shared_ptr<IAbstractActor> Detach(std::string id);
     void RegisterFactory(std::set<std::string>, ActorCreatorFunction);

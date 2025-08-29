@@ -115,6 +115,21 @@ json SystemLocal::Scheme()
   return jsonScheme;
 }
 
+json SystemLocal::Links()
+{
+    auto jsonLinks = json::array();
+    //std::lock_guard<std::mutex> lock(mutexScheme);
+    for (const auto& [actorId, actor] : _mapActors)
+    {
+
+        auto links = actor->Links();
+        for (const auto& link : links)
+        {
+            jsonLinks.emplace_back(link);
+        }
+    }
+    return jsonLinks;
+}
 
 void SystemLocal::Clear()
 {
@@ -169,6 +184,80 @@ std::weak_ptr<IAbstractActor> SystemLocal::Spawn(std::string typeName)
   return actorPtr;
 }
 
+
+std::weak_ptr<IAbstractActor> SystemLocal::Clone(const std::string& id, bool withLinks) //clone one by id
+{
+    auto result = std::weak_ptr<IAbstractActor>();
+    auto actor = this->GetActorById(id).lock();
+    if (!actor)
+        return result;
+    auto actorNew = this->Spawn(actor->Type()).lock();
+    if (!actor)
+        return result;
+    actorNew->Init(actor->Configuration());
+    result = actorNew;
+    if (withLinks)
+    {
+        auto links = Links();
+        for (auto& link : links)
+        {
+            if (link.contains("idActorSrc"))
+                if (link.at("idActorSrc").is_string())
+                    if (link.at("idActorSrc").get<std::string>() == id)
+                        link["idActorSrc"] = actorNew->Id();
+            if (link.contains("idActorDst"))
+                if (link.at("idActorDst").is_string())
+                    if (link.at("idActorDst").get<std::string>() == id)
+                        link["idActorDst"] = actorNew->Id();
+            this->Connect(link);
+        }
+    }
+    return result;
+}
+
+json SystemLocal::Clone(const std::vector<std::string>& ids, bool withLinks) //clone one by id
+{
+    std::map<std::string, std::string> idMap;
+    for (const auto &id : ids)
+    {
+        auto actor = Clone(id, false).lock();
+        if (actor)
+            idMap[id] = actor->Id();
+    }
+    if (withLinks)
+    {
+        auto links = Links();
+        for (auto& link : links)
+        {
+            bool found{ false };
+            if (link.contains("idActorSrc"))
+                if (link.at("idActorSrc").is_string())
+                {
+                    std::string  id = link.at("idActorSrc").get<std::string>();
+                    if (idMap.count(id) > 0)
+                    {
+                        link["idActorSrc"] = idMap[id];
+                        found = true;
+                    }
+                        
+                }
+
+            if (link.contains("idActorDst"))
+                if (link.at("idActorDst").is_string())
+                {
+                    std::string  id = link.at("idActorDst").get<std::string>();
+                    if (idMap.count(id) > 0)
+                    {
+                        link["idActorDst"] = idMap[id];
+                        found = true;
+                    } 
+                }
+            if(found)
+                this->Connect(link);
+        }
+    }
+    return idMap;
+}
 
 bool SystemLocal::Attach(std::shared_ptr<IAbstractActor> actorPtr)
 {
