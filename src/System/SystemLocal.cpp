@@ -91,6 +91,59 @@ bool SystemLocal::Init(const nlohmann::json &scheme)
   return res;
 }
 
+//TODO realize as Init without clear
+bool SystemLocal::Append(const nlohmann::json& scheme)
+{
+    const auto  actorsJson = scheme.find("actors");
+    bool res{ true };
+    if (actorsJson != scheme.end())
+    {
+        for (const auto& actorJson : *actorsJson)
+        {
+            auto actor = Spawn(actorJson);
+            if (!actor.lock())
+            {
+                logger->WARNING(0, TM("Actor wasn`t spawned:%s"), actorJson.dump().c_str());
+                //Clear();
+                res = false;
+            }
+            else
+            {
+                actor.lock()->SetParent(this);
+            }
+        }
+    }
+
+    // Init Links
+    auto const linksJson = scheme.find("links");
+    if (linksJson == scheme.end())
+    {
+        logger->TRACE(0, TM("Links Not Found"));
+    }
+    else
+    {
+        for (const auto& linkJson : *linksJson)
+        {
+            if (!Connect(linkJson))
+            {
+                logger->WARNING(0, TM("Connection problem %s"), linkJson.dump().c_str());
+                res = false;
+            }
+        }
+    }
+    if (scheme.contains("userData"))
+    {
+        userData.merge_patch(scheme.at("userData"));
+    }
+    //if(logger->trace)
+    if (res)
+    {
+        this->Activate();
+        logger->INFO(0, TM("Actor System was Append successfully %d"), 0);
+    }
+    return res;
+}
+
 
 json SystemLocal::Scheme()
 {
