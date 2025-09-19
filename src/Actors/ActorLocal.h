@@ -2,6 +2,7 @@
 
 #include "IAbstractActor.h"
 #include "IPort.h"
+#include <shared_mutex>
 namespace rf
 {
   class Logger;
@@ -68,6 +69,7 @@ namespace rf
     std::string _type;
     std::string label;
     std::map<std::string, std::shared_ptr<IPort>> _mapPorts;
+    mutable std::shared_mutex mtx_mapPort;
     //Флаг активации актора
     bool _flagActive;
 

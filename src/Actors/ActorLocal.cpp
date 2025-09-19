@@ -43,7 +43,7 @@ bool ActorLocal::Init(const json& actorConfig)
 json ActorLocal::Configuration()
 {
 	auto portJson = json::array();
-
+	std::shared_lock lock(mtx_mapPort);
 	for (const auto& [portIdInternal, portInternal] : _mapPorts)
 	{
 		portJson.emplace_back(portInternal->Configuration());
@@ -86,6 +86,7 @@ bool ActorLocal::SetUserData(const json& newUserData)
 json ActorLocal::Links()
 {
 	json connections = json::array();
+	std::shared_lock lock(mtx_mapPort);
 	for (const auto& [portIdInternal, portInternal] : _mapPorts)
 	{
 		auto mapExternals = portInternal->IdentifiersOfNotifiable();
@@ -111,6 +112,7 @@ json ActorLocal::Links()
 std::vector<std::weak_ptr<IPort>> ActorLocal::GetPorts()
 {
 	std::vector<std::weak_ptr<IPort>> ports;
+	std::shared_lock lock(mtx_mapPort);
 	for (const auto& [portIdInternal, portInternal] : _mapPorts)
 		ports.push_back(portInternal);
 	return ports;
@@ -120,6 +122,7 @@ std::vector<std::weak_ptr<IPort>> ActorLocal::GetPorts()
 std::set<std::string> ActorLocal::GetPortsIdSet()
 {
 	std::set<std::string> ports;
+	std::shared_lock lock(mtx_mapPort);
 	for (const auto& [portIdInternal, portInternal] : _mapPorts)
 		ports.insert(portIdInternal);
 	return ports;
@@ -150,6 +153,7 @@ std::shared_ptr<IPort> ActorLocal::addPort(const std::string& typePort, const st
 			if (this->_flagActive)
 				this->OnInputReceive(idPort, ptrData);
 			});
+		std::scoped_lock lock(mtx_mapPort);
 		_mapPorts.emplace(std::make_pair(portPtr->Id(), portPtr));
 	}
 	return portPtr;
@@ -182,6 +186,8 @@ std::shared_ptr<IPort> ActorLocal::addPort(const json& portJson)
 
 void ActorLocal::deletePort(const std::string& portId)
 {
+	std::scoped_lock lock(mtx_mapPort);
+
 	auto portIt = _mapPorts.find(portId);
 	if (portIt == _mapPorts.end())
 		return;
@@ -262,6 +268,7 @@ void ActorLocal::Disconnect(const std::string& actorIdExternal, const std::strin
 
 void ActorLocal::DisconnectAll(const std::string& actorIdExternal, const std::string& portIdExternal)
 {
+	std::shared_lock lock(mtx_mapPort);
 	for (const auto& [portIdInternal, portInternal] : _mapPorts)
 	{
 		portInternal->Detach(actorIdExternal, portIdExternal);
@@ -270,6 +277,7 @@ void ActorLocal::DisconnectAll(const std::string& actorIdExternal, const std::st
 
 std::weak_ptr<IPort> ActorLocal::GetPortById(const std::string& portId)
 {
+	std::shared_lock lock(mtx_mapPort);
 	auto it = _mapPorts.find(portId);
 	if (it == _mapPorts.end())
 		return std::weak_ptr<IPort>();

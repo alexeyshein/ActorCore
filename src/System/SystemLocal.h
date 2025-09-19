@@ -4,79 +4,85 @@
 #include <vector>
 #include <set>
 #include <map>
-#include <mutex>
-
+#include <shared_mutex>
 #include "IAbstractActor.h"
-
+#include "ISnapshotable.h"
 
 namespace rf
 {
-  class Logger;
-  using ActorCreatorFunction = std::function<IAbstractActor *(const std::string &, const std::string &)>;
-  class SystemLocal :public virtual IUnit
-  {
-  public:
-    SystemLocal(const std::string& LoggerInitParam="/P7.Sink=Null");
-    virtual ~SystemLocal();
-    json Scheme();
-    json Links();
-    void Clear();
-    std::weak_ptr<IAbstractActor> Spawn(json);        //spawn one actor
-    std::weak_ptr<IAbstractActor> Spawn(std::string); //by name
-    std::weak_ptr<IAbstractActor> Clone(const std::string& id, bool withLinks = false); //clone one by id
-    json Clone(const std::vector<std::string>& ids, bool withLinks = false); //clone one by id
-    bool Append(const nlohmann::json& scheme);// add as subscheme
-    std::weak_ptr<IAbstractActor> GetActorById(std::string);
-    std::weak_ptr<IAbstractActor> GetActorByLabel(std::string);
+    class Logger;
+    using ActorCreatorFunction = std::function<IAbstractActor* (const std::string&, const std::string&)>;
+    class SystemLocal :public virtual IUnit, public virtual ISnapshotable
+    {
+    public:
+        SystemLocal(const std::string& LoggerInitParam = "/P7.Sink=Null");
+        virtual ~SystemLocal();
+        json Scheme() const;
+        json Links() const;
+        void Clear();
+        std::weak_ptr<IAbstractActor> Spawn(json);        //spawn one actor
+        std::weak_ptr<IAbstractActor> Spawn(std::string); //by name
+        std::weak_ptr<IAbstractActor> Clone(const std::string& id, bool withLinks = false); //clone one by id
+        json Clone(const std::vector<std::string>& ids, bool withLinks = false); //clone one by id
+        bool Append(const nlohmann::json& scheme);// add as subscheme
+        std::weak_ptr<IAbstractActor> GetActorById(std::string);
+        std::weak_ptr<IAbstractActor> GetActorByLabel(std::string);
 
-    bool Attach(std::shared_ptr<IAbstractActor> pointer);
-    std::shared_ptr<IAbstractActor> Detach(std::string id);
-    void RegisterFactory(std::set<std::string>, ActorCreatorFunction);
-    std::set<std::string> GetRegisteredActorTypes();
-    size_t countActors(){return _mapActors.size();}
-    bool Connect(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2);
-    bool Connect(json);
-    void Disconnect(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2);
-    void Disconnect(json);
-    void SetLinkUserData(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2, json userData);
-    json GetLinkUserData(std::string idActorSrc, std::string idPortSrc, std::string idActorDst, std::string idPortDst);
-    void Activate();
-    void Deactivate();
-    std::map<std::string, bool> ActorsActivationState();
-    ///////////////////////////////////////////////////////////////
-    //IUnit
-    //////////////////////////////////////////////////////////////
-    std::string Id()  override {return std::string("SystemLocal");}
-    std::string Type() override {return std::string("SystemLocal");}
-    std::string Label() override { return label; }
-    void SetLabel(const std::string& lab) override { label = lab; }
+        bool Attach(std::shared_ptr<IAbstractActor> pointer);
+        std::shared_ptr<IAbstractActor> Detach(std::string id);
+        void RegisterFactory(std::set<std::string>, ActorCreatorFunction);
+        std::set<std::string> GetRegisteredActorTypes();
+        size_t countActors() { return _mapActors.size(); }
+        bool Connect(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2);
+        bool Connect(json);
+        void Disconnect(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2);
+        void Disconnect(json);
+        bool SetLinkUserData(std::string idActor1, std::string idPortActor1, std::string idActor2, std::string idPortActor2, json userData);
+        bool SetLinkUserData(json linkJson);
+        json GetLinkUserData(std::string idActorSrc, std::string idPortSrc, std::string idActorDst, std::string idPortDst);
+        json GetLinkUserData(json linkJson);
+        void Activate();
+        void Deactivate();
+        std::map<std::string, bool> ActorsActivationState();
+        ///////////////////////////////////////////////////////////////
+        //IUnit
+        //////////////////////////////////////////////////////////////
+        std::string Id()  override { return std::string("SystemLocal"); }
+        std::string Type() override { return std::string("SystemLocal"); }
+        std::string Label() override { return label; }
+        void SetLabel(const std::string& lab) override { label = lab; }
 
-    bool Init(const json&) override;
-    json Configuration() override {return Scheme();}
-    json UserData() { return userData; }
-    bool SetUserData(const json& ud) override { userData = ud; return true; }
+        bool Init(const json&) override;
+        json Configuration() override { return Scheme(); }
+        json UserData() { return userData; }
+        bool SetUserData(const json& ud) override { userData = ud; return true; }
 
-    IUnit* Parent() override {return parent;}
-    void SetParent(IUnit* parent) override { this->parent = parent; }
+        IUnit* Parent() override { return parent; }
+        void SetParent(IUnit* parent) override { this->parent = parent; }
 
-    std::vector<std::weak_ptr<IUnit>> Children() override;
-    std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string &) override {return std::monostate{};} 
-    bool SetProperty(const std::string&, bool) override{ return true; }
-    bool SetProperty(const std::string&, int) override { return true; }
-    bool SetProperty(const std::string&, double) override { return true; }
-    bool SetProperty(const std::string&, std::string) override { return true; }
-    bool SetProperties(const json&) override { return true; }
+        std::vector<std::weak_ptr<IUnit>> Children() override;
+        std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string&) override { return std::monostate{}; }
+        bool SetProperty(const std::string&, bool) override { return true; }
+        bool SetProperty(const std::string&, int) override { return true; }
+        bool SetProperty(const std::string&, double) override { return true; }
+        bool SetProperty(const std::string&, std::string) override { return true; }
+        bool SetProperties(const json&) override { return true; }
+        ///////////////////////////////////////////////////////////////
+        //ISnapshotable
+        //////////////////////////////////////////////////////////////
+        json CreateMemento() const  override;
+        void SetMemento(const json&) override;
 
-  private:
-    void RemoveAllConectionsWithActor(std::weak_ptr<IAbstractActor>);
-    void InitLogger(std::wstring initParams);
-    
-  protected:
-    std::map<std::string, std::shared_ptr<IAbstractActor>> _mapActors;
-    std::unique_ptr<Logger> logger;
-    std::string label;
-    std::mutex mutexScheme;
-    IUnit* parent;
-    json userData;
-  };
+    private:
+        void RemoveAllConectionsWithActor(std::weak_ptr<IAbstractActor>);
+        void InitLogger(std::wstring initParams);
+
+    protected:
+        std::map<std::string, std::shared_ptr<IAbstractActor>> _mapActors;
+        std::unique_ptr<Logger> logger;
+        std::string label;
+        mutable std::shared_mutex mutexScheme; // mutable allow use in  const-methods
+        IUnit* parent;
+        json userData;
+    };
 }

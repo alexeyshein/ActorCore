@@ -1,6 +1,7 @@
 #include "SystemLocal.h"
 
 #include <iostream>
+#include <unordered_set>
 
 #include "IAbstractActor.h"
 #include "ActorFactoryCollection.hpp"
@@ -18,7 +19,7 @@ using rf::Logger;
 
 SystemLocal::SystemLocal(const std::string& loggerInitParam) :
     logger(new Logger())
-    //, userData{ json({}) }
+    , userData(json::object())
 {
   if(logger)
   {
@@ -144,34 +145,36 @@ bool SystemLocal::Append(const nlohmann::json& scheme)
     return res;
 }
 
-
-json SystemLocal::Scheme()
+json SystemLocal::Scheme() const
 {
-  json jsonScheme{};
-  auto jsonActors = json::array();
-  auto jsonLinks = json::array();
-  //std::lock_guard<std::mutex> lock(mutexScheme);
-  for(const auto& [actorId, actor]:_mapActors)
-  {
-      jsonActors.emplace_back(actor->Configuration());
-      auto links = actor->Links();
-      //jsonConnections+=connections;
-      for(const auto &link : links)
-      {
-         jsonLinks.emplace_back(link);
-      }
-      
-  }
-  jsonScheme["actors"] = jsonActors;
-  jsonScheme["links"] = jsonLinks;
-  jsonScheme["userData"] = userData;
-  return jsonScheme;
+    json jsonScheme{};
+    auto jsonActors = json::array();
+    auto jsonLinks = json::array();
+    //std::lock_guard<std::mutex> lock(mutexScheme);
+    std::shared_lock lock(mutexScheme);
+    for (const auto& [actorId, actor] : _mapActors)
+    {
+        jsonActors.emplace_back(actor->Configuration());
+        auto links = actor->Links();
+        //jsonConnections+=connections;
+        for (const auto& link : links)
+        {
+            jsonLinks.emplace_back(link);
+        }
+
+    }
+    jsonScheme["actors"] = std::move(jsonActors);
+    jsonScheme["links"] = std::move(jsonLinks);
+    jsonScheme["userData"] = userData;
+    return jsonScheme;
 }
 
-json SystemLocal::Links()
+
+json SystemLocal::Links() const
 {
     auto jsonLinks = json::array();
     //std::lock_guard<std::mutex> lock(mutexScheme);
+    std::shared_lock lock(mutexScheme);
     for (const auto& [actorId, actor] : _mapActors)
     {
 
@@ -187,12 +190,20 @@ json SystemLocal::Links()
 void SystemLocal::Clear()
 {
   Deactivate();
-  //_mapActors.clear();
-  //std::lock_guard<std::mutex> lock(mutexScheme);
+  {
+      std::shared_lock lock(mutexScheme);
+      for (auto it = _mapActors.begin(); it != _mapActors.end();it++)
+      {
+          auto actor = it->second;
+          this->RemoveAllConectionsWithActor(actor);
+      }
+  }
+ 
+  std::scoped_lock lock(mutexScheme);
   for (auto it = _mapActors.begin(); it != _mapActors.end();)
   {
     auto actor = it->second;
-    this->RemoveAllConectionsWithActor(actor);
+    actor->SetParent(nullptr);
     it = _mapActors.erase(it);
   }
   userData = json::object();
@@ -216,8 +227,15 @@ std::weak_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor)
     actorPtr =  std::shared_ptr<IAbstractActor>(ActorFactoryCollection::Create(typeName, id));
     if(!actorPtr)
       return actorPtr;
-    Attach(actorPtr);
-    actorPtr->Init(jsonActor);
+    if (Attach(actorPtr))
+    {
+        actorPtr->Init(jsonActor);
+    }
+    else
+    {
+        actorPtr = nullptr;
+    }
+    
   }
   catch (...)
   {
@@ -232,8 +250,14 @@ std::weak_ptr<IAbstractActor> SystemLocal::Spawn(std::string typeName)
 {
   std::string id = UidGenerator::Generate(typeName);
   std::shared_ptr<IAbstractActor> actorPtr(ActorFactoryCollection::Create(typeName, id));
-  if(actorPtr)
-    Attach(actorPtr);
+  if (actorPtr)
+  {
+      if (!Attach(actorPtr))
+      {
+          actorPtr = nullptr;
+      }
+  }
+    
   return actorPtr;
 }
 
@@ -245,7 +269,7 @@ std::weak_ptr<IAbstractActor> SystemLocal::Clone(const std::string& id, bool wit
     if (!actor)
         return result;
     auto actorNew = this->Spawn(actor->Type()).lock();
-    if (!actor)
+    if (!actorNew)
         return result;
     actorNew->Init(actor->Configuration());
     result = actorNew;
@@ -315,7 +339,7 @@ json SystemLocal::Clone(const std::vector<std::string>& ids, bool withLinks) //c
 bool SystemLocal::Attach(std::shared_ptr<IAbstractActor> actorPtr)
 {
  // std::lock_guard<std::mutex> lock(mutexScheme);
-
+   std::scoped_lock lock(mutexScheme);
   if (_mapActors.count(actorPtr->Id()) != 0)
     return false;
   _mapActors.emplace(std::make_pair(actorPtr->Id(), actorPtr));
@@ -327,14 +351,20 @@ bool SystemLocal::Attach(std::shared_ptr<IAbstractActor> actorPtr)
 std::shared_ptr<IAbstractActor> SystemLocal::Detach(std::string id)
 {
   std::shared_ptr<IAbstractActor> actor{nullptr};
- // std::lock_guard<std::mutex> lock(mutexScheme);
-  auto it = _mapActors.find(id);
-  if (it != _mapActors.end())
   {
-    actor = it->second;
-    this->RemoveAllConectionsWithActor(actor);
-    actor->SetParent(nullptr);
-    it = _mapActors.erase(it);
+      std::scoped_lock lock(mutexScheme);
+      auto it = _mapActors.find(id);
+      if (it != _mapActors.end())
+      {
+          actor = it->second;
+          it = _mapActors.erase(it);
+      }
+  }
+  //separate to avoid deadlock in RemoveAllConectionsWithActor
+  if (actor)
+  {
+      this->RemoveAllConectionsWithActor(actor);
+      actor->SetParent(nullptr);   
   }
   return actor;
 }
@@ -343,6 +373,7 @@ std::shared_ptr<IAbstractActor> SystemLocal::Detach(std::string id)
 //spawn copy of existing
 std::weak_ptr<IAbstractActor> SystemLocal::GetActorById(std::string id)
 {
+  std::shared_lock lock(mutexScheme);
   auto it = _mapActors.find(id);
   if (it != _mapActors.end())
   {
@@ -353,6 +384,7 @@ std::weak_ptr<IAbstractActor> SystemLocal::GetActorById(std::string id)
 
 std::weak_ptr<IAbstractActor> SystemLocal::GetActorByLabel(std::string label)
 {
+    std::shared_lock lock(mutexScheme);
     for (const auto& pair : _mapActors) {
         const auto& actor = pair.second; // Получаем указатель на IAbstractActor
         if (actor && actor->Label() == label) {
@@ -387,7 +419,6 @@ bool SystemLocal::Connect(std::string idActor1, std::string idPortActor1, std::s
     return false;
 
   return actor2->ConnectTo(actor1, idPortActor1, idPortActor2);
-  //actor2->
 }
 
 
@@ -450,12 +481,140 @@ void SystemLocal::Disconnect(json connection)
 }
 
 
+json SystemLocal::CreateMemento() const
+{
+    return this->Scheme();
+}
+
+// Build a unique key for the link: "srcActor|srcPort|dstActor|dstPort"
+static inline std::string makeKey(const json& l)
+{
+    return std::string(l["idActorSrc"]) + "|" +
+        std::string(l["idPortSrc"]) + "|" +
+        std::string(l["idActorDst"]) + "|" +
+        std::string(l["idPortDst"]);
+}
+
+void SystemLocal::SetMemento(const json& schemeSnapshot)
+{
+    // Actualize Actors
+    // 
+    const auto  actorsJson = schemeSnapshot.find("actors");
+    std::set<std::string> updated;
+    if (actorsJson != schemeSnapshot.end() && actorsJson->is_array())
+    {
+        for (const auto& actorJson : *actorsJson)
+        {
+            if (actorJson.contains("id"))
+                if (actorJson.at("id").is_string())
+                {
+                    std::string id = actorJson["id"].get<std::string>();
+                    auto actor = this->GetActorById(id).lock();
+                    if (actor)
+                    {
+                        // update existing Actor
+                        if (actorJson.contains("properties"))
+                        {
+                            actor->SetProperties(actorJson.at("properties"));
+                        }
+                        if (actorJson.contains("userData"))
+                            actor->SetUserData(actorJson.at("userData"));
+                        else
+                            actor->SetUserData(json::object());
+                    }
+                    else
+                    {
+                        // add new Actor
+                        this->Spawn(actorJson);
+                    }
+                    updated.insert(id);
+                }    
+        }
+    }
+    //Remove actors not present in the current scheme snapshot
+    {
+        std::scoped_lock lock(mutexScheme);
+        for (auto it = _mapActors.begin(); it != _mapActors.end();)
+        {
+            auto id = it->first;
+            if (updated.count(id) < 1)
+            {
+                //Detach 
+                auto actor = it->second;
+                this->RemoveAllConectionsWithActor(actor);
+                it = _mapActors.erase(it);
+            }
+            else {
+                ++it;  // manually increment if not erasing
+            }
+        }
+    }
+
+
+    // Actualize Links
+    //
+    json linksCurJson = Links();
+    std::unordered_set<std::string> newKeys;
+    const auto  linksNewJson = schemeSnapshot.find("links");
+    if (linksNewJson != schemeSnapshot.end() && linksNewJson->is_array())
+    {
+        
+        std::unordered_map<std::string, json> curMap;
+        for (const auto& l : linksCurJson)
+            curMap[makeKey(l)] = l;
+        // 2. Iterate over new links
+        for (const auto& newLink : *linksNewJson)
+        {
+            const std::string k = makeKey(newLink);
+            newKeys.insert(k);
+            auto it = curMap.find(k);
+            if (it == curMap.end())
+            {
+                Connect(newLink);               // new link
+            }
+            else
+            {
+                json newUserData{ json::object() };
+                json curUserData{ json::object() };
+                if (it->second.contains("userData"))
+                    curUserData = it->second.at("userData");
+                if (newLink.contains("userData"))
+                    newUserData = newLink.at("userData");
+                if (newUserData != curUserData)
+                    SetLinkUserData(newLink);   // userData changed
+            }
+        }
+    }
+    // 3. Iterate over current links and remove any that are missing in the new set
+    for (const auto& oldLink : linksCurJson)
+    {
+        if (newKeys.find(makeKey(oldLink)) == newKeys.end())
+            Disconnect(oldLink);
+    }
+
+    // Actualize userData
+    //
+    if (schemeSnapshot.contains("userData"))
+    {
+        userData = schemeSnapshot.at("userData");
+    }
+    else
+    {
+        userData = json::object();
+    }
+
+    logger->INFO(0, TM("Actor System Restored successfully %d"), 0);
+    return ;
+}
+
+
 void SystemLocal::RemoveAllConectionsWithActor(std::weak_ptr<IAbstractActor> ptrWeakActorTarget)
 {
   auto actorTarget = ptrWeakActorTarget.lock();
   if(!actorTarget)
      return;
   auto actorPorts = actorTarget->GetPorts();
+  std::shared_lock lock(mutexScheme);
   for (auto actorPort : actorPorts)
   {
     actorPort.lock()->CleanObservers();
@@ -467,8 +626,9 @@ void SystemLocal::RemoveAllConectionsWithActor(std::weak_ptr<IAbstractActor> ptr
 }
 
 
-void SystemLocal::SetLinkUserData(std::string idActorSrc, std::string idPortSrc, std::string idActorDst, std::string idPortDst, json userData)
+bool SystemLocal::SetLinkUserData(std::string idActorSrc, std::string idPortSrc, std::string idActorDst, std::string idPortDst, json userData)
 {
+    bool res{ false };
     auto actor = GetActorById(idActorSrc).lock();
     if (actor)
     {
@@ -480,7 +640,22 @@ void SystemLocal::SetLinkUserData(std::string idActorSrc, std::string idPortSrc,
             }
         }
     }
-    return;
+    return res;
+}
+
+bool SystemLocal::SetLinkUserData(json linkJson)
+{
+    try
+    {
+        std::string idActorSrc = linkJson["idActorSrc"].get<std::string>();
+        std::string idPortSrc = linkJson["idPortSrc"].get<std::string>();
+        std::string idActorDst = linkJson["idActorDst"].get<std::string>();
+        std::string idPortDst = linkJson["idPortDst"].get<std::string>();
+        json userData = linkJson["userData"];
+        return this->SetLinkUserData(idActorSrc, idPortSrc, idActorDst, idPortDst, userData);
+    }
+    catch (...) {}
+    return false;
 }
 
 json SystemLocal::GetLinkUserData(std::string idActorSrc, std::string idPortSrc, std::string idActorDst, std::string idPortDst )
@@ -500,20 +675,39 @@ json SystemLocal::GetLinkUserData(std::string idActorSrc, std::string idPortSrc,
     return userData;
 }
 
+json SystemLocal::GetLinkUserData(json linkJson)
+{
+    try
+    {
+        std::string idActorSrc = linkJson["idActorSrc"].get<std::string>();
+        std::string idPortSrc = linkJson["idPortSrc"].get<std::string>();
+        std::string idActorDst = linkJson["idActorDst"].get<std::string>();
+        std::string idPortDst = linkJson["idPortDst"].get<std::string>();
+        json userData = linkJson["userData"];
+        return this->GetLinkUserData(idActorSrc, idPortSrc, idActorDst, idPortDst);
+    }
+    catch (...) {}
+    return json();
+}
+
+
 void SystemLocal::Activate()
 {
+  std::shared_lock lock(mutexScheme);
   std::for_each(_mapActors.cbegin(), _mapActors.cend(),[](auto & recInMap){ recInMap.second->Activate(); });
 }
 
 
 void SystemLocal::Deactivate()
 {
+    std::shared_lock lock(mutexScheme);
     std::for_each(_mapActors.cbegin(), _mapActors.cend(),[](auto & recInMap){ recInMap.second->Deactivate(); });
 }
 
 std::map<std::string, bool> SystemLocal::ActorsActivationState()
 {
     std::map<std::string, bool> activation;
+    std::shared_lock lock(mutexScheme);
     for (auto [actorId, actor] : _mapActors)
     {
         activation[actorId] = actor->IsActive();
@@ -525,10 +719,8 @@ std::map<std::string, bool> SystemLocal::ActorsActivationState()
 std::vector<std::weak_ptr<IUnit>> SystemLocal::Children() 
 {
   std::vector<std::weak_ptr<IUnit>> children;
+  std::shared_lock lock(mutexScheme);
   std::for_each(_mapActors.cbegin(), _mapActors.cend(),[&children](auto & recInMap){children.emplace_back(recInMap.second); });
   return children;
 }
 
-
-
- 

@@ -1,12 +1,14 @@
 #pragma once
 
-#include "SharedQueue.h"
 #include <memory>
 #include <functional>
 #include <unordered_map>            // std::unordered_map
 #include <vector>
 #include <future>
-#include <mutex>
+#include <shared_mutex>
+
+#include "SharedQueue.h"
+
 /*! \class FramePublisher Паттерн Observer
 \brief  Класс оповещения видеоинформацией от одного канала видео  всех подписчиков
 
@@ -43,7 +45,7 @@ protected:
 	//Список наблюдателей
 	std::unordered_map<uint64_t, Callback<T>> _mapCallbacks;
 	SharedQueue<std::future<void>> _myFutureQueue;
-	std::mutex _mutex; //Защита от изменения количества подписчиков
+	mutable std::shared_mutex _mutex; //Защита от изменения количества подписчиков
 	bool _isAsync;
 };
 
@@ -66,7 +68,8 @@ MessagePublisherFunctor<T>::~MessagePublisherFunctor()
 template<class T>
 void MessagePublisherFunctor<T>::Attach(std::size_t linkId, Callback<T> subscriberCandidate)
 {
-	std::lock_guard<std::mutex> mlock(_mutex);
+	std::scoped_lock mlock(_mutex);
+	//std::lock_guard<std::mutex> mlock(_mutex);
 	auto search  = _mapCallbacks.find(linkId);
 	if (search  == _mapCallbacks.end()) 
 	{
@@ -79,7 +82,8 @@ template<class T>
 void MessagePublisherFunctor<T>::Detach(std::size_t linkId)
 {
 	// Удаляем все ссылки на processingChannel
-	std::lock_guard<std::mutex> mlock(_mutex);
+	std::scoped_lock mlock(_mutex);
+	//std::lock_guard<std::mutex> mlock(_mutex);
 	_mapCallbacks.erase(linkId);
 }
 
@@ -87,8 +91,9 @@ void MessagePublisherFunctor<T>::Detach(std::size_t linkId)
 template<class T>
 void MessagePublisherFunctor<T>::Notify(const T& data)
 {
-	std::lock_guard<std::mutex> mlock(_mutex);
+	//std::lock_guard<std::mutex> mlock(_mutex);
 	SanitizeQueue();
+	std::shared_lock mlock(_mutex);
 	for (const auto & [key, subscriberFunc] : _mapCallbacks)
 	{
 		if (subscriberFunc != nullptr)
@@ -113,19 +118,22 @@ template<class T>
 size_t MessagePublisherFunctor<T>::NumObservers()
 {
 	//std::lock_guard<std::mutex> mlock(_mutex);
+	std::shared_lock mlock(_mutex);
 	return _mapCallbacks.size();
 }
 
 template<class T>
 void MessagePublisherFunctor<T>::CleanObservers()
 {
-	std::lock_guard<std::mutex> mlock(_mutex);
+	std::scoped_lock mlock(_mutex);
+	//std::lock_guard<std::mutex> mlock(_mutex);
 	_mapCallbacks.clear();
 }
 
 template<class T>
 void MessagePublisherFunctor<T>::SanitizeQueue()
 {
+	std::scoped_lock mlock(_mutex);
 	bool ready = true;
 	while (ready)
 	{
