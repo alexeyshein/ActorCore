@@ -533,15 +533,26 @@ void SystemLocal::SetMemento(const json& schemeSnapshot)
     }
     //Remove actors not present in the current scheme snapshot
     {
+        //separate to avoid deadlock in RemoveAllConectionsWithActor
+        { //first - remove all connections for removing actors
+            std::shared_lock lock(mutexScheme);
+            for (auto it = _mapActors.begin(); it != _mapActors.end(); ++it)
+            {
+                auto id = it->first;
+                if (updated.count(id) < 1)
+                {
+                    //Detach 
+                    this->RemoveAllConectionsWithActor(it->second);
+                }
+            }
+        }
+        //second - remove actors
         std::scoped_lock lock(mutexScheme);
         for (auto it = _mapActors.begin(); it != _mapActors.end();)
         {
             auto id = it->first;
             if (updated.count(id) < 1)
             {
-                //Detach 
-                auto actor = it->second;
-                this->RemoveAllConectionsWithActor(actor);
                 it = _mapActors.erase(it);
             }
             else {
