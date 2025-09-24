@@ -22,6 +22,8 @@ namespace rf
         void Save(const std::string& caption="update");
         void Undo();
         void Redo();
+        void Undo(size_t operations);
+        void Redo(size_t operations);
         // Проверка доступности операций
         bool CanUndo() const { return undoDeque.size() > 1; }
         bool CanRedo() const { return !redoDeque.empty(); }

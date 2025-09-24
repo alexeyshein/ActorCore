@@ -69,6 +69,50 @@ void SystemSnapshotManager::Redo()
     redoDeque.pop_back();
 }
 
+void SystemSnapshotManager::Undo(size_t steps)
+{
+    std::lock_guard<std::mutex> lock(mutex);
+
+    auto system = systemLocalWptr.lock();
+    if (!system)
+        return;
+    
+    // Limit steps to available undo operations
+    size_t realSteps = std::min(steps, undoDeque.size() - 1);
+    if (realSteps == 0) return;
+
+    // Move states from undo to redo
+    for (size_t i = 0; i < realSteps; ++i)
+    {
+        redoDeque.push_back(std::move(undoDeque.back()));
+        undoDeque.pop_back();
+    }
+
+    // Restore previous state
+    system->SetMemento(undoDeque.back().second);
+}
+
+void SystemSnapshotManager::Redo(size_t steps)
+{
+    std::lock_guard<std::mutex> lock(mutex);
+
+    auto system = systemLocalWptr.lock();
+    if (!system)
+        return;
+
+    // Limit steps to available redo operations
+    size_t realSteps = std::min(steps, redoDeque.size());
+    if (realSteps == 0) return;
+
+    // Move states from redo to undo
+    for (size_t i = 0; i < realSteps; ++i)
+    {
+        undoDeque.push_back(redoDeque.back());
+        redoDeque.pop_back();
+    }
+    system->SetMemento(undoDeque.back().second);
+}
+
 json SystemSnapshotManager::GetAllCaptionsAsJson() {
     std::lock_guard<std::mutex> lock(mutex);
 
