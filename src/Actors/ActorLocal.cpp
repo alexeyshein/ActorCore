@@ -186,15 +186,13 @@ std::shared_ptr<IPort> ActorLocal::addPort(const json& portJson)
 
 void ActorLocal::deletePort(const std::string& portId)
 {
-	std::scoped_lock lock(mtx_mapPort);
-
-	auto portIt = _mapPorts.find(portId);
-	if (portIt == _mapPorts.end())
-		return;
-
-	auto port = portIt->second;
-	//удалить связи
-	port->CleanObservers(); //Для OUT порта удаляем наблюдателей
+	
+	{  // If there is no such port, exit
+		std::scoped_lock lock(mtx_mapPort);
+		if (_mapPorts.count(portId)<1)
+			return;
+	}
+	// 1. For all actors in the scheme, remove the connection to the current port (For input ports)
 	auto* parent = this->Parent();
 	if (parent)
 	{
@@ -213,6 +211,16 @@ void ActorLocal::deletePort(const std::string& portId)
 		}
 	}
 
+	std::scoped_lock lock(mtx_mapPort);
+
+	auto portIt = _mapPorts.find(portId);
+	if (portIt == _mapPorts.end())
+		return;
+
+	auto port = portIt->second;
+	// 2.  For the OUT port, remove the observers
+	port->CleanObservers(); 
+	// 3. Remove the port itself
 	_mapPorts.erase(portIt);
 }
 
