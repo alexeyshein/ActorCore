@@ -22,9 +22,9 @@ namespace rf
 
 	   json GetStatus() override;
 
-        void Activate() final;
-        void Deactivate() final;
-		
+        void Activate() override final;
+        void Deactivate() override final;
+		void WaitForTasks();
 	protected:
 
 			/*!

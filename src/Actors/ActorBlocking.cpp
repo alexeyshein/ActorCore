@@ -100,6 +100,10 @@ void ActorBlocking::Deactivate()
 	return ;
 }
 
+void ActorBlocking::WaitForTasks()
+{
+	Deactivate();
+}
 
 json ActorBlocking::GetStatus()
 {

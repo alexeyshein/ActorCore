@@ -15,10 +15,7 @@ PortBase::PortBase(std::string id, IUnit* parent):
   logger->ConnectToShare("ActorSystem log client", "Actor System Trace channel", "Actor System Telemetry channel");
 }
 
-PortBase::~PortBase(){
-  
-};
-
+PortBase::~PortBase() = default;
 
 bool PortBase::Init(const json& config)
 {

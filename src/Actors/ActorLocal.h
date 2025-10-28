@@ -30,7 +30,7 @@ namespace rf
     virtual std::vector<std::weak_ptr<IUnit>> Children() override {return std::vector<std::weak_ptr<IUnit>>();}
     std::vector<std::weak_ptr<IPort>> GetPorts() override;
     std::weak_ptr<IPort> GetPortById(const std::string& portId) override;
-    std::set<std::string> GetPortsIdSet() final;
+    std::set<std::string> GetPortsIdSet() override final;
 
     std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string &) override {return std::monostate{};} 
     bool SetProperty(const std::string&, bool) override{ return true; }
@@ -42,14 +42,14 @@ namespace rf
 
     json GetStatus() override;
     
-    virtual void OnInputReceive(const std::string&, std::shared_ptr<IMessage>&){};
+    virtual void OnInputReceive(const std::string&,  std::shared_ptr<IMessage>){};
     bool ConnectTo(const std::string& actorIdExternal, std::weak_ptr<IPort>& portExternal, const std::string& portIdInternal) override;
     bool ConnectTo(std::weak_ptr<IAbstractActor>& actorExternal, const std::string& portIdExternal, const std::string& portIdInternal) override;
     void Disconnect(const std::string& actorIdExternal, std::weak_ptr<IPort>& portExternal, const std::string& portIdInternal) override; 
     void Disconnect(const std::string& actorIdExternal, const std::string& portIdExternal, const std::string& portIdInternal) override;
     void DisconnectAll(const std::string& actorIdExternal, const std::string& portIdExternal) override;
 
-    bool IsActive() final {return _flagActive;}
+    bool IsActive() override final {return _flagActive;}
     void Activate() override {_flagActive = true;OnActivate();}
     void Deactivate() override {_flagActive = false;OnDeactivate();}
 

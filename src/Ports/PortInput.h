@@ -6,7 +6,7 @@
 
 namespace rf
 {
-class PortInput: public virtual PortBase
+class PortInput: virtual public  PortBase
 {
   public:
   PortInput(std::string id, IUnit* parent = nullptr);

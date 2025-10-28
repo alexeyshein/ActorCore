@@ -6,13 +6,13 @@
 
 namespace rf
 {
-class PortBiDirectional:public PortInput , public PortOutput
+class PortBiDirectional: public PortInput , public PortOutput
 {
   public:
 
   PortBiDirectional(std::string id, IUnit* parent = nullptr);
 
-  virtual ~PortBiDirectional()=default;
+  virtual ~PortBiDirectional() = default;
 
   bool Init(const json&) override;
   

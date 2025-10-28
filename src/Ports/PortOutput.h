@@ -1,18 +1,19 @@
 #pragma once
+#include <memory>
+#include <shared_mutex>
 
 #include "PortBase.h"
 #include "IMessage.h"
 #include "IAbstractActor.h"
 #include "MessagePublisherFunctor.hpp"
-#include <memory>
 
 namespace rf
 {
-  class PortOutput : public virtual PortBase
+  class PortOutput : virtual public  PortBase
   {
   public:
     PortOutput(std::string id, IUnit* parent = nullptr);
-    virtual ~PortOutput() = default;
+    virtual ~PortOutput() =default;
 
     bool Init(const json&) override;
     json Configuration() override;
@@ -46,7 +47,10 @@ namespace rf
   protected:
     rf::MessagePublisherFunctor<std::shared_ptr<IMessage>> publisher;
     //Needs only for information matters
+    std::shared_mutex mutex_notifiable;
     std::set<std::pair<std::string, std::string>>  setIdentifiersOfNotifiable;
+
+    std::shared_mutex mutex_linkUserData;
     std::map<std::size_t,json>  linkUserData;
     //For Telemetry Purpose
     uint16_t      teleChannelIsNotifying;

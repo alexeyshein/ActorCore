@@ -1,5 +1,7 @@
 #include "ActorEventBased.h"
 
+#include <thread>
+
 #include "Logger.h"
 
 using rf::ActorEventBased;
@@ -25,7 +27,11 @@ ActorEventBased::ActorEventBased(const std::string& id, IUnit* parent)
 	logger->CreateTelemetryChannel(telemetryName.c_str(), 0, -1, 2, 1, true, &teleChannelIsProcessing);
 }
 
-
+ActorEventBased::~ActorEventBased()
+{
+	Deactivate();
+	WaitForTasks();
+}
 
 json ActorEventBased::Configuration()
 {
@@ -85,7 +91,7 @@ bool ActorEventBased::SetProperty(const std::string& propertyName, int value)
 
 
 
-void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<IMessage>& dataPtr)
+void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<IMessage> dataPtr)
 {
 	logger->TRACE(0, TM("%s received message ID:%lld on input-> %s"), Id().c_str(), dataPtr->Id(), portId.c_str());
 	if (!ApproveTask(portId, dataPtr))
@@ -115,19 +121,31 @@ void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<
 	}
 	else
 	{
+		std::lock_guard<std::mutex> lock(onInputTask);
 		ProcessWrap(portId, dataPtr);
 	}
 }
 
 
 
-void ActorEventBased::ProcessWrap(const std::string& portId, std::shared_ptr<rf::IMessage>& dataPtr)
+void ActorEventBased::ProcessWrap(const std::string& portId, std::shared_ptr<rf::IMessage> dataPtr)
 {
 	logger->Telemetry(teleChannelIsProcessing, 1);
 	Process(portId, dataPtr);
 	logger->Telemetry(teleChannelIsProcessing, 0);
 }
 
+
+void ActorEventBased::WaitForTasks()
+{
+	Deactivate();
+	std::lock_guard<std::mutex> lock(onInputTask);
+	while (!myFutureQueue.empty())
+	{
+		SanitizeQueue();
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	}
+}
 
 void ActorEventBased::SanitizeQueue()
 {

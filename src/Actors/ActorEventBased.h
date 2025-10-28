@@ -11,23 +11,23 @@ namespace rf
   {
   public:
     ActorEventBased(const std::string &id, IUnit* parent = nullptr);
-    virtual ~ActorEventBased() = default;
+    virtual ~ActorEventBased();
     json Configuration() override;
     bool SetProperties(const json&) override;
     std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string &) override ;
     bool SetProperty(const std::string&, bool) override ;
     bool SetProperty(const std::string&, int) override ;
 
-    virtual void OnInputReceive(const std::string &, std::shared_ptr<IMessage> &) final;
+    virtual void OnInputReceive(const std::string &, std::shared_ptr<IMessage> ) override final;
    
-    void Activate() final {ActorLocal::Activate();}
-    void Deactivate() final {ActorLocal::Deactivate();}
+    void Activate() override final {ActorLocal::Activate();}
+    void Deactivate() override final {ActorLocal::Deactivate();}
   protected:
     virtual bool ApproveTask(const std::string &, std::shared_ptr<IMessage> &) { return true; };
-    virtual void Process(const std::string &portId, std::shared_ptr<IMessage> &dataPtr) = 0;
+    virtual void Process(const std::string &portId, std::shared_ptr<IMessage> dataPtr) = 0;
     
-    void ProcessWrap(const std::string &portId, std::shared_ptr<IMessage> &dataPtr);
-
+    void ProcessWrap(const std::string &portId, std::shared_ptr<IMessage> dataPtr);
+    void WaitForTasks();
   private:
     void SanitizeQueue();
 
@@ -40,6 +40,7 @@ namespace rf
     uint16_t      teleChannelIsProcessing;
 
     std::mutex onInputTask;
+    //std
 
   };
 }

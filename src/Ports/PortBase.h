@@ -9,11 +9,11 @@
 namespace rf
 {
   class Logger;
-  class PortBase : public IPort
+  class PortBase :  public IPort
   {
   public:
     PortBase(std::string id, IUnit* parent = nullptr);
-    virtual ~PortBase();
+    virtual ~PortBase();// = default;
     std::string Id() override { return _id; }
     std::string Type() override {return  _type;}
     std::string Label() override { return label; }

@@ -1,6 +1,5 @@
 #include "PortOutput.h"
 #include <unordered_map> //std::hash<std::string>
-
 #include "Logger.h"
 
 using rf::PortOutput;
@@ -22,6 +21,7 @@ PortOutput::PortOutput(std::string id, IUnit* parent)
   std::string telemetryName{ idParent + "=>" + id + "_isNotifying" };
   logger->CreateTelemetryChannel(telemetryName.c_str(), 0,-1,2,1,true, &teleChannelIsNotifying);
 }
+
 
 bool PortOutput::Init(const json& config)
 {
@@ -85,9 +85,9 @@ void PortOutput::Attach(const  std::string& remotePortOwnerId, std::weak_ptr<IPo
   //TODO add check by typesMessages
   std::size_t linkId = CalculateLinkId(remotePortOwnerId, ptrRemotePort->Id());
   std::function<void(const std::shared_ptr<IMessage> &)> f = std::bind(&rf::IPort::Receive, ptrRemotePort.get(), std::placeholders::_1);
+  std::unique_lock    lock(mutex_notifiable);
   publisher.Attach(linkId, f);
   setIdentifiersOfNotifiable.emplace(std::pair<std::string,std::string>(remotePortOwnerId, ptrRemotePort->Id()));
-
   if (functionOnAttach)
       functionOnAttach(this->Id(), remotePortOwnerId, ptrRemotePort->Id());
 }
@@ -103,8 +103,11 @@ void PortOutput::Detach(const  std::string& remotePortOwnerId, std::weak_ptr<IPo
 void PortOutput::Detach(const  std::string& remotePortOwnerId, const std::string& remotePortId)
 {
   std::size_t linkId = std::hash<std::string>{}(remotePortOwnerId+remotePortId);
-  publisher.Detach(linkId);
-  setIdentifiersOfNotifiable.erase(std::pair<std::string,std::string>(remotePortOwnerId, remotePortId));
+  {
+      std::unique_lock    lock(mutex_notifiable);
+      publisher.Detach(linkId);
+      setIdentifiersOfNotifiable.erase(std::pair<std::string, std::string>(remotePortOwnerId, remotePortId));
+  }
   RemoveLinkUserDataFromMap(remotePortOwnerId, remotePortId);
   // auto it = setIdentifiersOfNotifiable.find(std::pair<std::string,std::string>(remotePortOwnerId, remotePortId));
   // if(it!=setIdentifiersOfNotifiable.end())
@@ -123,7 +126,15 @@ void PortOutput::Notify(const std::shared_ptr<IMessage> &data)
   if (parent != nullptr)
       label = parent->Label();
   data->SetSender(parentId, Id(), label);
-  publisher.Notify(data);
+  try {
+      std::shared_lock   lock(mutex_notifiable);
+      publisher.Notify(data);
+  }
+  catch (const std::exception& e)
+  {
+      logger->WARNING(0, TM("%s Port output Notify exception :%s"), Id().c_str(), e.what());
+  }
+  
   logger->Telemetry(teleChannelIsNotifying, 0);
 }
 
@@ -136,12 +147,14 @@ std::size_t  PortOutput::CalculateLinkId(const  std::string& remotePortOwnerId, 
 void PortOutput::SetLinkUserData(const  std::string& remotePortOwnerId, const std::string& remotePortId, const json& userData)
 {
     std::size_t linkId = CalculateLinkId(remotePortOwnerId, remotePortId);
+    std::unique_lock   lock(mutex_notifiable);
     linkUserData[linkId] = userData;
 }
 
 json PortOutput::GetLinkUserData(const  std::string& remotePortOwnerId, const std::string& remotePortId)
 {
     std::size_t linkId = CalculateLinkId(remotePortOwnerId, remotePortId);
+    std::shared_lock   lock(mutex_notifiable);
     auto it = linkUserData.find(linkId);
     if (it != linkUserData.end())
     {
@@ -156,6 +169,7 @@ json PortOutput::GetLinkUserData(const  std::string& remotePortOwnerId, const st
 void PortOutput::RemoveLinkUserDataFromMap(const  std::string& remotePortOwnerId, const std::string& remotePortId)
 {
     std::size_t linkId = CalculateLinkId(remotePortOwnerId, remotePortId);
+    std::unique_lock   lock(mutex_notifiable);
     linkUserData.erase(linkId);
 }
 
