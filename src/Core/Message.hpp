@@ -16,7 +16,7 @@ public:
     Message(uint64_t id, uint64_t timestamp, uint16_t type);
     Message(uint64_t id, uint64_t timestamp, uint16_t type,  const T&  data);
     Message(uint64_t id, uint64_t timestamp, uint16_t type,   T&& data);
-    ~Message(){};
+    ~Message()override{};
     IMessage* Copy() const override { return new Message<T>(*this); }
     void Set(uint64_t id, uint64_t timestamp, uint16_t type, const T&  data);
     void Set(uint64_t id, uint64_t timestamp, uint16_t type,  T&& data);
