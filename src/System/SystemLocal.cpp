@@ -225,8 +225,11 @@ std::weak_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor)
              id = jsonActor["id"].get<std::string>();
 
     actorPtr =  std::shared_ptr<IAbstractActor>(ActorFactoryCollection::Create(typeName, id));
-    if(!actorPtr)
-      return actorPtr;
+    if (!actorPtr)
+    {
+        logger->WARNING(0, TM("Failed to create default actor %s with ID: %s"), typeName.c_str(), id.c_str());
+        return actorPtr;
+    }
     if (Attach(actorPtr))
     {
         actorPtr->Init(jsonActor);
@@ -234,12 +237,12 @@ std::weak_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor)
     else
     {
         actorPtr = nullptr;
-    }
-    
+        logger->WARNING(0, TM("Init failed: unable to apply JSON configuration. ID: %s. Params: %s"),   id.c_str(), jsonActor);
+    } 
   }
   catch (...)
   {
-      logger->TRACE(0, TM("Spawn error %s"), jsonActor);
+      logger->WARNING(0, TM("Spawn error %s"), jsonActor);
   }
   return actorPtr;
 }
