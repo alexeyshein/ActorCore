@@ -128,6 +128,54 @@ std::set<std::string> ActorLocal::GetPortsIdSet()
 	return ports;
 }
 
+std::variant<std::monostate, bool, int, double, std::string> ActorLocal::GetProperty(const std::string& propertyPath)
+{
+	auto jsonConf = this->Configuration();
+	try
+	{
+		auto properties = jsonConf["properties"];
+		auto valueOpt = GetJsonValueFromJson(properties, propertyPath); // Добавлена точка с запятой
+
+		// Проверяем, что значение найдено
+		if (!valueOpt.has_value()) {
+			logger->WARNING(0, TM("Property '%s' not found for actor %s"),
+				propertyPath.c_str(), Id().c_str());
+			return std::monostate{};
+		}
+
+		nlohmann::json* jsonValue = valueOpt.value();
+
+		if (jsonValue == nullptr) {
+			return std::monostate{};
+		}
+
+		// Определяем тип и возвращаем соответствующее значение
+		if (jsonValue->is_boolean()) {
+			return jsonValue->get<bool>();
+		}
+		else if (jsonValue->is_number_integer()) {
+			return jsonValue->get<int>();
+		}
+		else if (jsonValue->is_number_float()) {
+			return jsonValue->get<double>();
+		}
+		else if (jsonValue->is_string()) {
+			return jsonValue->get<std::string>();
+		}
+		else {
+			// null, object, array - неподдерживаемые типы
+			logger->WARNING(0, TM("Unsupported property type for '%s'"),
+				propertyPath.c_str());
+			return std::monostate{};
+		}
+	}
+	catch (const std::exception& e)
+	{
+		logger->WARNING(0, TM("GetProperty error for %s: %s"),
+			Id().c_str(), e.what());
+		return std::monostate{};
+	}
+}
 
 
 json ActorLocal::GetStatus()
@@ -291,4 +339,54 @@ std::weak_ptr<IPort> ActorLocal::GetPortById(const std::string& portId)
 		return std::weak_ptr<IPort>();
 
 	return it->second;
+}
+
+std::optional<nlohmann::json*> ActorLocal::GetJsonValueFromJson(const nlohmann::json& jsonData, const std::string& propertyPath) {
+	// Разбиваем путь на части
+	std::vector<std::string> keys;
+	std::string key;
+	std::stringstream ss(propertyPath);
+
+	// Разделяем путь по точкам и квадратным скобкам
+	while (std::getline(ss, key, '.')) {
+		size_t bracketPos = key.find('[');
+		if (bracketPos != std::string::npos) {
+			std::string objectKey = key.substr(0, bracketPos);
+			keys.push_back(objectKey);
+			std::string indexStr = key.substr(bracketPos + 1, key.size() - bracketPos - 2);
+			keys.push_back(indexStr); // Добавляем индекс как отдельный элемент
+		}
+		else {
+			keys.push_back(key);
+		}
+	}
+
+	const nlohmann::json* current = &jsonData;
+	for (const auto& k : keys) {
+		//std::cout << current->dump()<<"\n";
+		try {
+			if (std::isdigit(k[0])) { // Если это индекс массива
+				int index = std::stoi(k);
+				if (current->is_array() && index < current->size()) {
+					current = &(*current)[index];
+				}
+				else {
+					return std::nullopt; // Индекс вне диапазона
+				}
+			}
+			else { // Это ключ объекта
+				if (current->contains(k)) {
+					current = &(*current)[k];
+				}
+				else {
+					return std::nullopt; // Если ключ не найден
+				}
+			}
+		}
+		catch (const std::exception&) {
+			return std::nullopt; // Обработка ошибок
+		}
+	}
+
+	return std::optional<nlohmann::json*>(const_cast<nlohmann::json*>(current));
 }

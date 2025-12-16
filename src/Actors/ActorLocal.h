@@ -32,7 +32,7 @@ namespace rf
     std::weak_ptr<IPort> GetPortById(const std::string& portId) override;
     std::set<std::string> GetPortsIdSet() override final;
 
-    std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string &) override {return std::monostate{};} 
+    std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string&) override;// { return std::monostate{}; }
     bool SetProperty(const std::string&, bool) override{ return true; }
     bool SetProperty(const std::string&, int) override { return true; }
     bool SetProperty(const std::string&, double) override { return true; }
@@ -63,6 +63,8 @@ namespace rf
     void deletePort(const std::string& portId);
     virtual void OnActivate(){};
     virtual void OnDeactivate(){};
+    static  std::optional<nlohmann::json*> GetJsonValueFromJson(const nlohmann::json& jsonData, const std::string& propertyPath);
+
   protected:
     IUnit* _parent;
     std::string _id;
