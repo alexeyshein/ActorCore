@@ -20,8 +20,8 @@ namespace rf
         json Scheme() const;
         json Links() const;
         void Clear();
-        std::weak_ptr<IAbstractActor> Spawn(json);        //spawn one actor
-        std::weak_ptr<IAbstractActor> Spawn(std::string); //by name
+        std::weak_ptr<IAbstractActor> Spawn(json, bool activate=true);        //spawn one actor
+        std::weak_ptr<IAbstractActor> Spawn(std::string, bool activate=true); //by name
         std::weak_ptr<IAbstractActor> Clone(const std::string& id, bool withLinks = false); //clone one by id
         json Clone(const std::vector<std::string>& ids, bool withLinks = false); //clone one by id
         bool Append(const nlohmann::json& scheme);// add as subscheme

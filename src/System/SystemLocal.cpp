@@ -50,7 +50,7 @@ bool SystemLocal::Init(const nlohmann::json &scheme)
    }
   for (const auto &actorJson : *actorsJson)
   {
-    auto actor = Spawn(actorJson);
+    auto actor = Spawn(actorJson,false);
     if (!actor.lock())
     {
       logger->WARNING(0, TM("Actor wasn`t spawned:%s"),actorJson.dump().c_str());
@@ -101,7 +101,7 @@ bool SystemLocal::Append(const nlohmann::json& scheme)
     {
         for (const auto& actorJson : *actorsJson)
         {
-            auto actor = Spawn(actorJson);
+            auto actor = Spawn(actorJson,false);
             if (!actor.lock())
             {
                 logger->WARNING(0, TM("Actor wasn`t spawned:%s"), actorJson.dump().c_str());
@@ -211,7 +211,7 @@ void SystemLocal::Clear()
 
 
 //by json
-std::weak_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor)
+std::weak_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor, bool activate)
 {
   std::shared_ptr<IAbstractActor> actorPtr = nullptr;
 
@@ -232,12 +232,21 @@ std::weak_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor)
     }
     if (Attach(actorPtr))
     {
-        actorPtr->Init(jsonActor);
+        if (actorPtr->Init(jsonActor)) // 
+        {
+            if(activate)
+                actorPtr->Activate();
+        }
+        else
+        {
+            logger->WARNING(0, TM("Init failed: unable to apply JSON configuration. ID: %s. Params: %s"), id.c_str(), jsonActor);
+        }
     }
     else
     {
         actorPtr = nullptr;
-        logger->WARNING(0, TM("Init failed: unable to apply JSON configuration. ID: %s. Params: %s"),   id.c_str(), jsonActor);
+        logger->WARNING(0, TM("Failed to attach actor %s with ID to System: %s"), typeName.c_str(), id.c_str());
+
     } 
   }
   catch (...)
@@ -249,15 +258,22 @@ std::weak_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor)
 
 
 //by name
-std::weak_ptr<IAbstractActor> SystemLocal::Spawn(std::string typeName)
+std::weak_ptr<IAbstractActor> SystemLocal::Spawn(std::string typeName, bool activate)
 {
   std::string id = UidGenerator::Generate(typeName);
   std::shared_ptr<IAbstractActor> actorPtr(ActorFactoryCollection::Create(typeName, id));
   if (actorPtr)
   {
-      if (!Attach(actorPtr))
+      if (Attach(actorPtr))
+      {
+          if (activate)
+              actorPtr->Activate();
+      }
+      else
       {
           actorPtr = nullptr;
+          logger->WARNING(0, TM("Failed to attach actor %s with ID to System: %s"), typeName.c_str(), id.c_str());
+
       }
   }
     
@@ -271,7 +287,7 @@ std::weak_ptr<IAbstractActor> SystemLocal::Clone(const std::string& id, bool wit
     auto actor = this->GetActorById(id).lock();
     if (!actor)
         return result;
-    auto actorNew = this->Spawn(actor->Type()).lock();
+    auto actorNew = this->Spawn(actor->Type(),false).lock();
     if (!actorNew)
         return result;
     actorNew->Init(actor->Configuration());
@@ -292,6 +308,8 @@ std::weak_ptr<IAbstractActor> SystemLocal::Clone(const std::string& id, bool wit
             this->Connect(link);
         }
     }
+    if(actor->IsActive())
+        actorNew->Activate();
     return result;
 }
 
@@ -302,7 +320,10 @@ json SystemLocal::Clone(const std::vector<std::string>& ids, bool withLinks) //c
     {
         auto actor = Clone(id, false).lock();
         if (actor)
+        {
             idMap[id] = actor->Id();
+        }
+           
     }
     if (withLinks)
     {
