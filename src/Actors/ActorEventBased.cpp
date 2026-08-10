@@ -93,6 +93,8 @@ bool ActorEventBased::SetProperty(const std::string& propertyName, int value)
 
 void ActorEventBased::OnInputReceive(const std::string& portId, std::shared_ptr<IMessage> dataPtr)
 {
+	if (!dataPtr)
+		return;
 	logger->TRACE(0, TM("%s received message ID:%lld on input-> %s"), Id().c_str(), dataPtr->Id(), portId.c_str());
 	if (!ApproveTask(portId, dataPtr))
 		return;
