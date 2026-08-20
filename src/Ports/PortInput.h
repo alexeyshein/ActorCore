@@ -3,6 +3,7 @@
 #include "PortBase.h"
 #include "SharedQueue.h"
 #include "IMessage.h"
+#include "PortRuntimeStats.hpp"
 
 namespace rf
 {
@@ -24,12 +25,19 @@ class PortInput: virtual public  PortBase
   void Receive(std::shared_ptr<IMessage> data) override;
   void SetEventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)>)  override;
   
-  SharedQueue<std::shared_ptr<IMessage>>& GetMessageQueueRef(){return _queuePtrData;} 
+  SharedQueue<std::shared_ptr<IMessage>>& GetMessageQueueRef() {return _queuePtrData;} 
   
+  // --- runtime stats ---
+  const PortRuntimeStats& GetRuntimeStats() const { return _runtimeStats; }
+  json GetRuntimeStatus() const;
+
 protected:
    bool isTrigger;
    SharedQueue<std::shared_ptr<IMessage>> _queuePtrData;
    std::function<void(std::string,std::shared_ptr<IMessage>)> functionOnRecive;
+
+   PortRuntimeStats _runtimeStats;
+
   private:
   uint16_t      teleChannelQueueSizeId;
 };

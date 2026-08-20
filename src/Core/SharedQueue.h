@@ -32,21 +32,21 @@ namespace rf
         void push_back(T&& item);
         void emplace_back(T&& item);
         void setMaxSize(size_t maxSize);
-        size_t getMaxSize(){return maxSize;}
+        size_t getMaxSize() const {return maxSize;}
         void setModeFull(ModeQueueFull);
-        ModeQueueFull getModeFull(){return modeFull;}
-        bool isFull() { return size() >= maxSize; }
+        ModeQueueFull getModeFull() const {return modeFull;}
+        bool isFull() const { return size() >= maxSize; }
         void clear();
 
-        int  size();
-        bool empty();
+        int  size() const;
+        bool empty() const;
 
     protected:
       void WhenFull();
 
     protected:
         std::deque<T> queue_;
-        std::mutex mutex_;
+        mutable std::mutex mutex_;
         std::condition_variable cond_;
         size_t maxSize;
         ModeQueueFull modeFull;
@@ -164,7 +164,7 @@ void rf::SharedQueue<T>::clear()
 }
 
 template <typename T>
-int rf::SharedQueue<T>::size()
+int rf::SharedQueue<T>::size()  const
 {
     std::unique_lock<std::mutex> mlock(mutex_);
     int size = queue_.size();
@@ -172,7 +172,7 @@ int rf::SharedQueue<T>::size()
 }
 
 template <typename T>
-bool rf::SharedQueue<T>::empty()
+bool rf::SharedQueue<T>::empty() const
 {
     std::unique_lock<std::mutex> mlock(mutex_);
     return queue_.empty();

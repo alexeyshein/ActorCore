@@ -20,6 +20,8 @@ namespace rf
 
     virtual void OnInputReceive(const std::string &, std::shared_ptr<IMessage> ) override final;
    
+    json GetStatus() override;   // 
+
     void Activate() override final {ActorLocal::Activate();}
     void Deactivate() override final {ActorLocal::Deactivate();}
   protected:

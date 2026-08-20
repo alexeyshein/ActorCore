@@ -1,6 +1,10 @@
 #include "PortOutput.h"
 #include <unordered_map> //std::hash<std::string>
 #include "Logger.h"
+#include "RuntimeClock.hpp"
+
+#include "FlowTraceRecorder.h"
+#include "FlowTraceTypes.hpp"
 
 using rf::PortOutput;
 using rf::Logger;
@@ -134,7 +138,21 @@ void PortOutput::Notify(const std::shared_ptr<IMessage> &data)
   {
       logger->WARNING(0, TM("%s Port output Notify exception :%s"), Id().c_str(), e.what());
   }
-  
+
+  _runtimeStats.RecordActivity();
+  if (_flowTraceRecorder && _flowTraceRecorder->IsEnabled())
+  {
+      _flowTraceRecorder->Record({
+          SteadyTimeUs(),
+          FlowTraceEventType::PortNotify,
+          FlowTraceHash(parent ? parentId : ""),
+          FlowTraceHash(_id),
+          data->Id(),
+          data->Type(),
+          0, 0,
+          static_cast<uint32_t>(publisher.NumObservers())
+          });
+  }
   logger->Telemetry(teleChannelIsNotifying, 0);
 }
 
@@ -164,8 +182,6 @@ json PortOutput::GetLinkUserData(const  std::string& remotePortOwnerId, const st
 }
 
 
-
-
 void PortOutput::RemoveLinkUserDataFromMap(const  std::string& remotePortOwnerId, const std::string& remotePortId)
 {
     std::size_t linkId = CalculateLinkId(remotePortOwnerId, remotePortId);
@@ -176,4 +192,26 @@ void PortOutput::RemoveLinkUserDataFromMap(const  std::string& remotePortOwnerId
 void PortOutput::SetEventOnAttach(std::function<void(std::string, std::string, std::string)> func)
 {
     functionOnAttach = func;
+}
+
+json PortOutput::GetRuntimeStatus() const
+{
+    json j;
+    j["id"] = _id;
+    j["type"] = _type;
+    j["direction"] = "output";
+    j["isAsync"] = publisher.IsAsyncMode();
+    j["observerCount"] = publisher.NumObservers();
+    j["stats"] = _runtimeStats.ToJson();
+
+    json observers = json::array();
+    {
+        std::shared_lock lock(const_cast<std::shared_mutex&>(mutex_notifiable));
+        for (const auto& [actorId, portId] : setIdentifiersOfNotifiable)
+        {
+            observers.emplace_back(json{ {"actorId", actorId}, {"portId", portId} });
+        }
+    }
+    j["connectedTo"] = observers;
+    return j;
 }

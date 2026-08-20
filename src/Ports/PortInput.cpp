@@ -3,6 +3,9 @@
 #include <limits>
 
 #include "Logger.h"
+#include "RuntimeClock.hpp"   
+#include "FlowTraceRecorder.h"   
+#include "FlowTraceTypes.hpp"
 
 using rf::PortInput;
 using rf::Logger;
@@ -114,10 +117,52 @@ bool PortInput::SetProperty(const std::string& propertyName, std::string value)
 void PortInput::Receive(std::shared_ptr<IMessage> dataPtr)
 {
     //TODO add check for compliance with data and typesMessages
+    
+    // --- track drops ---
+    bool wasFull = _queuePtrData.isFull()
+        && _queuePtrData.getModeFull() == ModeQueueFull::Nothing;
 
    _queuePtrData.push_back(dataPtr);
     logger->Telemetry(teleChannelQueueSizeId, _queuePtrData.size());
     
+    // --- update runtime stats ---
+    if (wasFull)
+    {
+        _runtimeStats.RecordDrop();
+        if (_flowTraceRecorder && _flowTraceRecorder->IsEnabled())
+        {
+            _flowTraceRecorder->Record({
+                SteadyTimeUs(),
+                FlowTraceEventType::PortDrop,
+                FlowTraceHash(_parent ? _parent->Id() : ""),
+                FlowTraceHash(_id),
+                dataPtr->Id(),
+                dataPtr->Type(),
+                FlowTraceHash(dataPtr->IdSender()),
+                FlowTraceHash(dataPtr->IdPortSender()),
+                static_cast<uint32_t>(_queuePtrData.size())
+                });
+        }
+    }
+    else
+    {
+        _runtimeStats.RecordActivity();
+        if (_flowTraceRecorder && _flowTraceRecorder->IsEnabled())
+        {
+            _flowTraceRecorder->Record({
+                SteadyTimeUs(),
+                FlowTraceEventType::PortReceive,
+                FlowTraceHash(_parent ? _parent->Id() : ""),
+                FlowTraceHash(_id),
+                dataPtr->Id(),
+                dataPtr->Type(),
+                FlowTraceHash(dataPtr->IdSender()),
+                FlowTraceHash(dataPtr->IdPortSender()),
+                static_cast<uint32_t>(_queuePtrData.size())
+                });
+        }
+    }
+
    if(isTrigger && functionOnRecive)
      functionOnRecive(_id, dataPtr);
 }
@@ -127,3 +172,15 @@ void PortInput::SetEventOnReceive(std::function<void(std::string,std::shared_ptr
    functionOnRecive = func;
 }
 
+json PortInput::GetRuntimeStatus() const
+{
+    json j;
+    j["id"] = _id;
+    j["type"] = _type;
+    j["direction"] = "input";
+    j["isTrigger"] = isTrigger;
+    j["queueSize"] = _queuePtrData.size();
+    j["queueCapacity"] = static_cast<int>(_queuePtrData.getMaxSize());
+    j["stats"] = _runtimeStats.ToJson();
+    return j;
+}

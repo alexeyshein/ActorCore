@@ -9,6 +9,8 @@
 namespace rf
 {
   class Logger;
+  class FlowTraceRecorder;   
+
   class PortBase :  public IPort
   {
   public:
@@ -54,6 +56,9 @@ namespace rf
     void Receive(std::shared_ptr<IMessage> data) override{}
     void SetEventOnReceive(std::function<void(std::string,std::shared_ptr<IMessage>)>)  override{}
 
+    // 
+    void SetFlowTraceRecorder(FlowTraceRecorder* recorder) { _flowTraceRecorder = recorder; }
+
   protected:
     IUnit* _parent;
     std::string _id;
@@ -62,5 +67,7 @@ namespace rf
     std::unique_ptr<Logger> logger;
     std::set<uint16_t> typesMessages;//
     json userData;
+
+    FlowTraceRecorder* _flowTraceRecorder = nullptr;   // non-owning
   };
 }

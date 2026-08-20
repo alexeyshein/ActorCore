@@ -1,0 +1,52 @@
+#pragma once
+
+#include <atomic>
+#include <cstdint>
+#include "json.hpp"
+#include "RuntimeClock.hpp"
+#include "RuntimeTypes.hpp"
+
+namespace rf
+{
+    /// Lightweight runtime statistics for a single port.
+    /// Designed to be embedded into PortInput / PortOutput.
+    /// All fields are atomic — safe to read from any thread.
+    struct PortRuntimeStats
+    {
+        std::atomic<uint64_t> revision{ 0 };      // <-- NEW
+        std::atomic<uint64_t> messageCount{ 0 };
+        std::atomic<uint64_t> droppedCount{ 0 };
+        std::atomic<uint64_t> lastActivityTs{ 0 };
+
+        void RecordActivity()
+        {
+            messageCount.fetch_add(1, std::memory_order_relaxed);
+            lastActivityTs.store(SteadyTimeUs(), std::memory_order_relaxed);
+            revision.fetch_add(1, std::memory_order_relaxed);   // <-- NEW
+        }
+
+        void RecordDrop()
+        {
+            droppedCount.fetch_add(1, std::memory_order_relaxed);
+            revision.fetch_add(1, std::memory_order_relaxed);   // <-- NEW
+        }
+
+        void Reset()
+        {
+            revision.store(0, std::memory_order_relaxed);
+            messageCount.store(0, std::memory_order_relaxed);
+            droppedCount.store(0, std::memory_order_relaxed);
+            lastActivityTs.store(0, std::memory_order_relaxed);
+        }
+
+        nlohmann::json ToJson() const
+        {
+            nlohmann::json j;
+            j["revision"] = revision.load(std::memory_order_relaxed);
+            j["messageCount"] = messageCount.load(std::memory_order_relaxed);
+            j["droppedCount"] = droppedCount.load(std::memory_order_relaxed);
+            j["lastActivityTs"] = lastActivityTs.load(std::memory_order_relaxed);
+            return j;
+        }
+    };
+}

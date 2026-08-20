@@ -1,13 +1,20 @@
 
 #include "ActorLocal.h"
+
 #include "UidGenerator.hpp"
 #include "PortFactory.h"
 #include "Logger.h"
-#include "PortOutput.h" //access for specific functions, like setLinkUserData
+#include "PortBase.h"
+#include "PortOutput.h" //(для dynamic_cast) access for specific functions, like setLinkUserData
+#include "PortInput.h"         // <-- (для dynamic_cast)
+#include "RuntimeTypes.hpp"    
+
+#include "FlowTraceRecorder.h"
 
 using rf::ActorLocal;
 using rf::IPort;
 using rf::Logger;
+using rf::OperabilityState;
 
 using nlohmann::json;
 
@@ -181,11 +188,23 @@ std::variant<std::monostate, bool, int, double, std::string> ActorLocal::GetProp
 json ActorLocal::GetStatus()
 {
 	json res;
+
+	// --- identity ---
 	res["id"] = _id;
-	// res["Recived frames"] = recivedFramesByPeriod;
-	// recivedFramesByPeriod = 0;
-	// res["Processed frames"] = processedFramesByPeriod;
-	// processedFramesByPeriod = 0;
+	res["type"] = _type;
+	res["label"] = label;
+
+	// --- states (top-level) ---
+	res["isActive"] = _flagActive;
+	res["adminState"] = ToString(_flagActive ? AdminState::Active : AdminState::Inactive);
+	res["runtimeState"] = ToString(_flagActive ? RuntimeState::Idle : RuntimeState::Inactive);
+	res["operabilityState"] = ToString(GetOperabilityState());
+	res["operabilityReason"] = GetOperabilityReason();
+	res["operabilityChangedTs"] = _operabilityChangedTs.load(std::memory_order_relaxed);
+
+	// --- statistics & ports ---
+	res["stats"] = _runtimeStats.ToJson();
+	res["ports"] = CollectPortsRuntimeStatus();
 
 	return res;
 }
@@ -201,6 +220,16 @@ std::shared_ptr<IPort> ActorLocal::addPort(const std::string& typePort, const st
 			if (this->_flagActive)
 				this->OnInputReceive(idPort, ptrData);
 			});
+
+		//  propagate flow trace recorder ---
+		if (_flowTraceRecorder)
+		{
+			if (auto* portBase = dynamic_cast<PortBase*>(portPtr.get()))
+			{
+				portBase->SetFlowTraceRecorder(_flowTraceRecorder);
+			}
+		}
+
 		std::scoped_lock lock(mtx_mapPort);
 		_mapPorts.emplace(std::make_pair(portPtr->Id(), portPtr));
 	}
@@ -389,4 +418,87 @@ std::optional<nlohmann::json*> ActorLocal::GetJsonValueFromJson(const nlohmann::
 	}
 
 	return std::optional<nlohmann::json*>(const_cast<nlohmann::json*>(current));
+}
+
+// 
+json ActorLocal::CollectPortsRuntimeStatus() const
+{
+	json portsJson = json::object();
+	std::shared_lock lock(mtx_mapPort);
+	for (const auto& [portId, port] : _mapPorts)
+	{
+		if (auto* inp = dynamic_cast<PortInput*>(port.get()))
+		{
+			portsJson[portId] = inp->GetRuntimeStatus();
+		}
+		else if (auto* out = dynamic_cast<PortOutput*>(port.get()))
+		{
+			portsJson[portId] = out->GetRuntimeStatus();
+		}
+		else
+		{
+			// fallback for unknown port types
+			json portJson;
+			portJson["id"] = port->Id();
+			portJson["type"] = port->Type();
+			portsJson[portId] = portJson;
+		}
+	}
+	return portsJson;
+}
+
+void ActorLocal::SetFlowTraceRecorder(FlowTraceRecorder* recorder)
+{
+	_flowTraceRecorder = recorder;
+
+	// propagate to all existing ports
+	std::shared_lock lock(mtx_mapPort);
+	for (auto& [portId, port] : _mapPorts)
+	{
+		if (auto* portBase = dynamic_cast<PortBase*>(port.get()))
+		{
+			portBase->SetFlowTraceRecorder(recorder);
+		}
+	}
+}
+
+void ActorLocal::SetOperability(OperabilityState state, const std::string& reason)
+{
+	_operabilityState.store(state, std::memory_order_relaxed);
+	_operabilityChangedTs.store(SteadyTimeUs(), std::memory_order_relaxed);
+	{
+		std::lock_guard<std::mutex> lock(_mtxOperabilityReason);
+		_operabilityReason = reason;
+	}
+
+	// Поднимаем ревизию актора, чтобы дельта (GetRuntimeDelta) подхватила изменение состояния
+	_runtimeStats.Touch();
+
+	if (logger)
+	{
+		logger->INFO(0, TM("%s operability changed to %s: %s"),
+			Id().c_str(),
+			ToString(state),
+			reason.c_str());
+	}
+}
+
+OperabilityState ActorLocal::GetOperabilityState() const
+{
+	return _operabilityState.load(std::memory_order_relaxed);
+}
+
+std::string ActorLocal::GetOperabilityReason() const
+{
+	std::lock_guard<std::mutex> lock(_mtxOperabilityReason);
+	return _operabilityReason;
+}
+
+json ActorLocal::GetOperability() const
+{
+	json j;
+	j["state"] = ToString(GetOperabilityState());
+	j["reason"] = GetOperabilityReason();
+	j["changedTs"] = _operabilityChangedTs.load(std::memory_order_relaxed);
+	return j;
 }

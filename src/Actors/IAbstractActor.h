@@ -6,9 +6,12 @@
 #include <variant>
 
 #include "IPort.h"
+#include "RuntimeTypes.hpp"
+#include "ActorRuntimeStats.hpp"
 
 namespace rf
 {
+
   class IAbstractActor:public virtual IUnit
   {
   public:
@@ -46,5 +49,11 @@ namespace rf
 	  \return объект json со статистической информацией
 	  */
     virtual json GetStatus() = 0;
+
+    virtual const ActorRuntimeStats& GetRuntimeStats() const = 0;
+
+    virtual OperabilityState GetOperabilityState() const = 0;
+    virtual std::string GetOperabilityReason() const = 0;
+    virtual json GetOperability() const = 0;
   };
 }

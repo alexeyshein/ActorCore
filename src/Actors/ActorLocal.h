@@ -2,10 +2,12 @@
 
 #include "IAbstractActor.h"
 #include "IPort.h"
+#include "ActorRuntimeStats.hpp"
 #include <shared_mutex>
 namespace rf
 {
   class Logger;
+  class FlowTraceRecorder;
 
   class ActorLocal : public IAbstractActor
   {
@@ -55,6 +57,17 @@ namespace rf
 
     Logger* GetLogger() { return logger? logger.get():nullptr; }
 
+    // --- runtime stats access ---
+    const ActorRuntimeStats& GetRuntimeStats() const override { return _runtimeStats; }
+
+    void SetFlowTraceRecorder(FlowTraceRecorder* recorder);
+    FlowTraceRecorder* GetFlowTraceRecorder() const { return _flowTraceRecorder; }
+
+    // --- Operability read API  ---
+    OperabilityState GetOperabilityState() const override;
+    std::string GetOperabilityReason() const override;
+    json GetOperability() const override;   // {state, reason, changedTs}
+
   protected:
     //void Nottify();
     std::shared_ptr<IPort> addPort(const std::string& typePort, const std::string& portId);
@@ -64,6 +77,13 @@ namespace rf
     virtual void OnActivate(){};
     virtual void OnDeactivate(){};
     static  std::optional<nlohmann::json*> GetJsonValueFromJson(const nlohmann::json& jsonData, const std::string& propertyPath);
+
+    // --- helper to collect port runtime status ---
+    json CollectPortsRuntimeStatus() const;
+
+    // --- Operability write API (self-declared state) ---
+    void SetOperability(OperabilityState state, const std::string& reason = "");
+
 
   protected:
     IUnit* _parent;
@@ -78,6 +98,15 @@ namespace rf
     std::unique_ptr<Logger> logger;
     json userData;
     std::string description;
+
+    ActorRuntimeStats _runtimeStats;
+    FlowTraceRecorder* _flowTraceRecorder = nullptr;   
+
+    // --- Operability State ---
+    std::atomic<OperabilityState> _operabilityState{ OperabilityState::Normal };
+    std::atomic<uint64_t>          _operabilityChangedTs{ 0 };
+    mutable std::mutex             _mtxOperabilityReason;
+    std::string                    _operabilityReason;
 
   };
 }

@@ -7,7 +7,12 @@
 #include "ActorFactoryCollection.hpp"
 #include "UidGenerator.hpp"
 #include "Logger.h"
+#include "PortBase.h"     // если ещё не добавлен
+#include "PortInput.h"
 #include "PortOutput.h" //access for specific functions, like setLinkUserData
+#include "ActorLocal.h"   // для dynamic_cast и SetFlowTraceRecorder
+
+#include "RuntimeClock.hpp"
 
 using nlohmann::json;
 using rf::ActorCreatorFunction;
@@ -232,8 +237,27 @@ std::weak_ptr<IAbstractActor> SystemLocal::Spawn(json jsonActor, bool activate)
     }
     if (Attach(actorPtr))
     {
+        if (auto* actorLocal = dynamic_cast<ActorLocal*>(actorPtr.get()))
+        {
+            actorLocal->SetFlowTraceRecorder(&_flowTraceRecorder);
+        }
+
+        _flowTraceRecorder.RegisterString(actorPtr->Id());
+        //for (auto& weakPort : actorPtr->GetPorts())
+        //{
+        //    if (auto port = weakPort.lock())
+        //        _flowTraceRecorder.RegisterString(port->Id());
+        //}
+
         if (actorPtr->Init(jsonActor)) // 
         {
+            // ports may have been added during Init, register 
+            for (auto& weakPort : actorPtr->GetPorts())
+            {
+                if (auto port = weakPort.lock())
+                    _flowTraceRecorder.RegisterString(port->Id());
+            }
+
             if(activate)
                 actorPtr->Activate();
         }
@@ -266,6 +290,13 @@ std::weak_ptr<IAbstractActor> SystemLocal::Spawn(std::string typeName, bool acti
   {
       if (Attach(actorPtr))
       {
+          // 
+          if (auto* actorLocal = dynamic_cast<ActorLocal*>(actorPtr.get()))
+          {
+              actorLocal->SetFlowTraceRecorder(&_flowTraceRecorder);
+          }
+          _flowTraceRecorder.RegisterString(actorPtr->Id());
+
           if (activate)
               actorPtr->Activate();
       }
@@ -368,6 +399,12 @@ bool SystemLocal::Attach(std::shared_ptr<IAbstractActor> actorPtr)
     return false;
   _mapActors.emplace(std::make_pair(actorPtr->Id(), actorPtr));
   actorPtr->SetParent(this);
+
+  // --- inject flow trace recorder ---
+  if (auto* actorLocal = dynamic_cast<ActorLocal*>(actorPtr.get()))
+  {
+      actorLocal->SetFlowTraceRecorder(&_flowTraceRecorder);
+  }
   return true;
 }
 
@@ -758,4 +795,273 @@ std::vector<std::weak_ptr<IUnit>> SystemLocal::Children()
   std::for_each(_mapActors.cbegin(), _mapActors.cend(),[&children](auto & recInMap){children.emplace_back(recInMap.second); });
   return children;
 }
+
+// 
+json SystemLocal::GetRuntimeStatus()
+{
+    json result;
+    result["timestamp"] = WallTimeMs();
+    result["steadyTs"] = SteadyTimeUs();
+
+    uint64_t maxRevision = 0;
+
+    int totalActors = 0;
+    int activeActors = 0;
+
+    json actorsStatus = json::object();
+    json linksStatus = json::array();
+
+    {
+        std::shared_lock lock(mutexScheme);
+
+        for (const auto& [actorId, actor] : _mapActors)
+        {
+            totalActors++;
+
+            uint64_t actorRev = actor->GetRuntimeStats().revision.load(std::memory_order_relaxed);
+            if (actorRev > maxRevision)
+                maxRevision = actorRev;
+
+            json actorStatus = actor->GetStatus();
+            actorsStatus[actorId] = actorStatus;
+
+            if (actor->IsActive())
+                activeActors++;
+
+            // Собираем статус линков из выходных портов
+            auto ports = actor->GetPorts();
+            for (auto& weakPort : ports)
+            {
+                auto port = weakPort.lock();
+                if (!port)
+                    continue;
+
+                // Нам интересны только PortOutput
+                if (auto* portOut = dynamic_cast<PortOutput*>(port.get()))
+                {
+                    auto notifiable = portOut->IdentifiersOfNotifiable();
+                    for (const auto& [dstActorId, dstPortId] : notifiable)
+                    {
+                        json linkRuntime;
+                        linkRuntime["idActorSrc"] = actorId;
+                        linkRuntime["idPortSrc"] = portOut->Id();
+                        linkRuntime["idActorDst"] = dstActorId;
+                        linkRuntime["idPortDst"] = dstPortId;
+
+                        // 1. Добавляем userData линка (если есть)
+                        //json linkUserData = portOut->GetLinkUserData(dstActorId, dstPortId);
+                        //if (!linkUserData.empty())
+                        //{
+                        //    linkRuntime["userData"] = linkUserData;
+                        //}
+
+                        // 2. Добавляем статистику активности линка (из PortOutput)
+                        json linkStats;
+                        linkStats["lastActivityTs"] = portOut->GetRuntimeStats().lastActivityTs.load(std::memory_order_relaxed);
+                        linkStats["messageCount"] = portOut->GetRuntimeStats().messageCount.load(std::memory_order_relaxed);
+                        linkRuntime["stats"] = linkStats;
+
+                        linksStatus.emplace_back(std::move(linkRuntime));
+                    }
+                }
+            }
+        }
+    }
+
+    json summary;
+    summary["totalActors"] = totalActors;
+    summary["activeActors"] = activeActors;
+
+    result["currentRevision"] = maxRevision;
+    result["summary"] = summary;
+    result["actors"] = actorsStatus;
+    result["links"] = linksStatus;
+
+    return result;
+}
+
+json SystemLocal::GetRuntimeDelta(uint64_t sinceRevision)
+{
+    json result;
+    result["timestamp"] = WallTimeMs();
+    result["steadyTs"] = SteadyTimeUs();
+
+    uint64_t maxRevision = sinceRevision;
+
+    json changedActors = json::object();
+    json changedLinks = json::array();
+
+    int totalActors = 0;
+    int activeActors = 0;
+
+    {
+        std::shared_lock lock(mutexScheme);
+
+        for (const auto& [actorId, actor] : _mapActors)
+        {
+            totalActors++;
+            if (actor->IsActive())
+                activeActors++;
+
+            bool actorChanged = false;
+
+            const auto& actorStats = actor->GetRuntimeStats();
+            uint64_t actorRev = actorStats.revision.load(std::memory_order_relaxed);
+            if (actorRev > maxRevision)
+                maxRevision = actorRev;
+            if (actorRev > sinceRevision)
+                actorChanged = true;
+
+            auto ports = actor->GetPorts();
+            for (auto& weakPort : ports)
+            {
+                auto port = weakPort.lock();
+                if (!port)
+                    continue;
+
+                if (auto* inp = dynamic_cast<PortInput*>(port.get()))
+                {
+                    uint64_t portRev = inp->GetRuntimeStats().revision.load(std::memory_order_relaxed);
+                    if (portRev > maxRevision)
+                        maxRevision = portRev;
+                    if (portRev > sinceRevision)
+                        actorChanged = true;
+                }
+                else if (auto* out = dynamic_cast<PortOutput*>(port.get()))
+                {
+                    uint64_t portRev = out->GetRuntimeStats().revision.load(std::memory_order_relaxed);
+                    if (portRev > maxRevision)
+                        maxRevision = portRev;
+                    if (portRev > sinceRevision)
+                        actorChanged = true;
+                }
+            }
+
+            if (actorChanged)
+            {
+                json actorStatus = actor->GetStatus();
+                changedActors[actorId] = std::move(actorStatus);
+
+                for (auto& weakPort : ports)
+                {
+                    auto port = weakPort.lock();
+                    if (!port)
+                        continue;
+
+                    if (auto* portOut = dynamic_cast<PortOutput*>(port.get()))
+                    {
+                        auto notifiable = portOut->IdentifiersOfNotifiable();
+                        for (const auto& [dstActorId, dstPortId] : notifiable)
+                        {
+                            json linkRuntime;
+                            linkRuntime["idActorSrc"] = actorId;
+                            linkRuntime["idPortSrc"] = portOut->Id();
+                            linkRuntime["idActorDst"] = dstActorId;
+                            linkRuntime["idPortDst"] = dstPortId;
+
+                            //json linkUserData = portOut->GetLinkUserData(dstActorId, dstPortId);
+                            //if (!linkUserData.empty())
+                            //{
+                            //    linkRuntime["userData"] = linkUserData;
+                            //}
+
+                            json linkStats;
+                            linkStats["lastActivityTs"] = portOut->GetRuntimeStats().lastActivityTs.load(std::memory_order_relaxed);
+                            linkStats["messageCount"] = portOut->GetRuntimeStats().messageCount.load(std::memory_order_relaxed);
+                            linkRuntime["stats"] = linkStats;
+
+                            changedLinks.emplace_back(std::move(linkRuntime));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    json summary;
+    summary["totalActors"] = totalActors;
+    summary["activeActors"] = activeActors;
+
+    result["sinceRevision"] = sinceRevision;
+    result["currentRevision"] = maxRevision;
+    result["summary"] = summary;
+    result["actors"] = changedActors;
+    result["links"] = changedLinks;
+
+    return result;
+}
+
+// --- Flow Trace --- 
+
+// ============================================================
+// Flow Trace
+// ============================================================
+
+rf::FlowTraceRecorder& SystemLocal::GetFlowTraceRecorder()
+{
+    return _flowTraceRecorder;
+}
+
+void SystemLocal::SetFlowTraceEnabled(bool enabled)
+{
+    _flowTraceRecorder.SetEnabled(enabled);
+}
+
+bool SystemLocal::IsFlowTraceEnabled()
+{
+    return _flowTraceRecorder.IsEnabled();
+}
+
+json SystemLocal::GetFlowTraceInfo()
+{
+    return _flowTraceRecorder.GetInfo();
+}
+
+json SystemLocal::GetFlowTraceRange(uint64_t fromTs, uint64_t toTs, size_t limit)
+{
+    return _flowTraceRecorder.QueryRange(fromTs, toTs, limit);
+}
+
+json SystemLocal::GetMessageFlowTrace(uint64_t messageId, size_t limit)
+{
+    return _flowTraceRecorder.QueryByMessage(messageId, limit);
+}
+
+json SystemLocal::GetActorFlowTrace(const std::string& actorId,
+    uint64_t fromTs, uint64_t toTs,
+    size_t limit)
+{
+    return _flowTraceRecorder.QueryByActor(actorId, fromTs, toTs, limit);
+}
+
+// --- convenience wrappers ---
+
+json SystemLocal::GetRecentFlowTrace(uint64_t lastMs, size_t limit)
+{
+    uint64_t toTs = 0; // до конца буфера
+    uint64_t fromTs = 0;
+    if (lastMs > 0)
+    {
+        uint64_t now = SteadyTimeUs();
+        uint64_t deltaUs = lastMs * 1000;
+        fromTs = (deltaUs < now) ? (now - deltaUs) : 0;
+    }
+    return _flowTraceRecorder.QueryRange(fromTs, toTs, limit);
+}
+
+json SystemLocal::GetActorRecentFlowTrace(const std::string& actorId,
+    uint64_t lastMs, size_t limit)
+{
+    uint64_t toTs = 0;
+    uint64_t fromTs = 0;
+    if (lastMs > 0)
+    {
+        uint64_t now = SteadyTimeUs();
+        uint64_t deltaUs = lastMs * 1000;
+        fromTs = (deltaUs < now) ? (now - deltaUs) : 0;
+    }
+    return _flowTraceRecorder.QueryByActor(actorId, fromTs, toTs, limit);
+}
+
+
 

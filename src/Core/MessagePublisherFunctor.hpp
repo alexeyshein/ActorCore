@@ -32,10 +32,10 @@ public:
 	void Attach(std::size_t linkId, Callback<T>);
 	void Detach(std::size_t linkId);
 	void Notify(const T&);
-	size_t NumObservers();
+	size_t NumObservers() const;
 	void CleanObservers();
 	void SetAsyncMode(bool async){_isAsync = async;}
-	bool IsAsyncMode(){return _isAsync;}
+	bool IsAsyncMode() const {return _isAsync;}
 	void SetAsyncQueueSize(size_t size) {_myFutureQueue.setMaxSize(size);}
 	size_t AsyncQueueSize() {return _myFutureQueue.getMaxSize();}
 protected:
@@ -115,7 +115,7 @@ void MessagePublisherFunctor<T>::Notify(const T& data)
 }
 
 template<class T>
-size_t MessagePublisherFunctor<T>::NumObservers()
+size_t MessagePublisherFunctor<T>::NumObservers() const
 {
 	//std::lock_guard<std::mutex> mlock(_mutex);
 	std::shared_lock mlock(_mutex);

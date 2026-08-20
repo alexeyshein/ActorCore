@@ -4,6 +4,8 @@
 #include <iostream>
 
 #include "Logger.h"
+#include "RuntimeClock.hpp"
+#include "RuntimeTypes.hpp"
 
 using rf::ActorBlocking;
 using rf::IPort;
@@ -14,6 +16,7 @@ using nlohmann::json;
 ActorBlocking::ActorBlocking(const std::string& id, IUnit* parent)
 	: ActorLocal(id, parent)
 , minLoopTimeMks(100)
+, _flagStop(true)
 {
 	_type = "ActorBlocking";
 	
@@ -108,11 +111,22 @@ void ActorBlocking::WaitForTasks()
 json ActorBlocking::GetStatus()
 {
 	json res = ActorLocal::GetStatus();
-	// res["Recived frames"] = recivedFramesByPeriod;
-	// recivedFramesByPeriod = 0;
-	// res["Processed frames"] = processedFramesByPeriod;
-	// processedFramesByPeriod = 0;
-  
+
+	bool processing = _runtimeStats.isProcessingNow.load(std::memory_order_relaxed);
+
+	// --- runtime state ---
+	RuntimeState state = RuntimeState::Idle;
+	if (!_flagActive)
+		state = RuntimeState::Inactive;
+	else if (_flagStop)
+		state = RuntimeState::Stopping;
+	else if (processing)
+		state = RuntimeState::Processing;
+
+	res["runtimeState"] = ToString(state);
+	res["isProcessingNow"] = processing;
+	res["minLoopTimeMks"] = static_cast<int>(minLoopTimeMks);
+
 	return res;
 }
 
@@ -121,11 +135,56 @@ void ActorBlocking::processingLoop()
 	std::chrono::microseconds minLoopTime(minLoopTimeMks);
 	while (!_flagStop)
 	{
-			auto timeout = std::chrono::system_clock::now()+minLoopTime;
-			logger->Telemetry(teleChannelIsProcessing, 1);
-			bool res =  Process();
-			logger->Telemetry(teleChannelIsProcessing, 0);
-			std::this_thread::sleep_until(timeout);
+		auto timeout = std::chrono::system_clock::now() + minLoopTime;
+
+		// --- NEW: record process start ---
+		_runtimeStats.isProcessingNow.store(true, std::memory_order_relaxed);
+		uint64_t startTs = SteadyTimeUs();
+		_runtimeStats.lastProcessStartTs.store(startTs, std::memory_order_relaxed);
+
+		logger->Telemetry(teleChannelIsProcessing, 1);
+
+		try
+		{
+			bool res = Process();
+
+			// --- record success ---
+			_runtimeStats.processedTotal.fetch_add(1, std::memory_order_relaxed);
+		}
+		catch (const std::exception& e)
+		{
+			// ---  record error ---
+			_runtimeStats.errorTotal.fetch_add(1, std::memory_order_relaxed);
+			_runtimeStats.lastErrorTs.store(SteadyTimeUs(), std::memory_order_relaxed);
+			logger->WARNING(0, TM("%s processingLoop exception: %s"), Id().c_str(), e.what());
+		}
+		catch (...)
+		{
+			// ---  record unknown error ---
+			_runtimeStats.errorTotal.fetch_add(1, std::memory_order_relaxed);
+			_runtimeStats.lastErrorTs.store(SteadyTimeUs(), std::memory_order_relaxed);
+			logger->WARNING(0, TM("%s processingLoop unknown exception"), Id().c_str());
+		}
+
+		// --- record process end + duration ---
+		uint64_t endTs = SteadyTimeUs();
+		_runtimeStats.lastProcessEndTs.store(endTs, std::memory_order_relaxed);
+		_runtimeStats.isProcessingNow.store(false, std::memory_order_relaxed);
+
+		uint64_t duration = endTs - startTs;
+		_runtimeStats.totalProcessTimeUs.fetch_add(duration, std::memory_order_relaxed);
+
+		// update max (relaxed CAS loop)
+		uint64_t prevMax = _runtimeStats.maxProcessTimeUs.load(std::memory_order_relaxed);
+		while (duration > prevMax &&
+			!_runtimeStats.maxProcessTimeUs.compare_exchange_weak(
+				prevMax, duration, std::memory_order_relaxed))
+		{
+		}
+
+		logger->Telemetry(teleChannelIsProcessing, 0);
+
+		std::this_thread::sleep_until(timeout);
 	}
 }
 

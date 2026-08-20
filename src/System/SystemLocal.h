@@ -7,6 +7,8 @@
 #include <shared_mutex>
 #include "IAbstractActor.h"
 #include "ISnapshotable.h"
+#include "RuntimeTypes.hpp"
+#include "FlowTraceRecorder.h"
 
 namespace rf
 {
@@ -44,6 +46,31 @@ namespace rf
         void Activate();
         void Deactivate();
         std::map<std::string, bool> ActorsActivationState();
+
+        // --- runtime monitoring ---
+        json GetRuntimeStatus();
+        json GetRuntimeDelta(uint64_t sinceRevision);
+
+
+        // --- flow trace ---                          
+        FlowTraceRecorder& GetFlowTraceRecorder();
+        void SetFlowTraceEnabled(bool enabled);
+        bool IsFlowTraceEnabled();
+
+        // core trace API (delegates to recorder)
+        nlohmann::json GetFlowTraceInfo();
+        nlohmann::json GetFlowTraceRange(uint64_t fromTs, uint64_t toTs, size_t limit);
+        nlohmann::json GetMessageFlowTrace(uint64_t messageId, size_t limit);
+        nlohmann::json GetActorFlowTrace(const std::string& actorId,
+            uint64_t fromTs, uint64_t toTs,
+            size_t limit);
+
+        // convenience (JSON-RPC level, converts lastMs to timestamps)
+        nlohmann::json GetRecentFlowTrace(uint64_t lastMs, size_t limit);
+        nlohmann::json GetActorRecentFlowTrace(const std::string& actorId,
+            uint64_t lastMs, size_t limit);
+
+
         ///////////////////////////////////////////////////////////////
         //IUnit
         //////////////////////////////////////////////////////////////
@@ -84,5 +111,6 @@ namespace rf
         mutable std::shared_mutex mutexScheme; // mutable allow use in  const-methods
         IUnit* parent;
         json userData;
+        FlowTraceRecorder _flowTraceRecorder;
     };
 }
