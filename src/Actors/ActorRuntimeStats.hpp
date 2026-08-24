@@ -14,6 +14,7 @@ namespace rf
     /// All fields are atomic — safe to read from any thread.
     struct ActorRuntimeStats
     {
+        std::atomic<uint64_t>* pGlobalRevision{ nullptr };
         // --- revision ---
         std::atomic<uint64_t> revision{ 0 };     // 
 
@@ -41,7 +42,10 @@ namespace rf
         /// Call this after any stats change to bump revision
         void Touch()
         {
-            revision.fetch_add(1, std::memory_order_relaxed);
+            uint64_t nextRev = pGlobalRevision
+                ? pGlobalRevision->fetch_add(1, std::memory_order_relaxed) + 1
+                : revision.fetch_add(1, std::memory_order_relaxed) + 1;
+            revision.store(nextRev, std::memory_order_relaxed);
         }
 
         uint64_t AvgProcessTimeUs() const

@@ -42,8 +42,7 @@ namespace rf
     json GetLinkUserData(const  std::string& remotePortOwnerId, const std::string& remotePortId);
   
     // --- runtime stats ---
-    const PortRuntimeStats& GetRuntimeStats() const { return _runtimeStats; }
-    json GetRuntimeStatus() const;
+    json GetRuntimeStatus() const override;
 
   protected:
     std::size_t CalculateLinkId(const  std::string& remotePortOwnerId, const std::string& remotePortId);
@@ -60,7 +59,5 @@ namespace rf
     //For Telemetry Purpose
     uint16_t      teleChannelIsNotifying;
     std::function<void(std::string, std::string, std::string)> functionOnAttach; //portId, remotePortOwnerId, remotePortId
-    PortRuntimeStats _runtimeStats;
-
   };
 }

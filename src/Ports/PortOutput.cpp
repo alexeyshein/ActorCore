@@ -196,13 +196,10 @@ void PortOutput::SetEventOnAttach(std::function<void(std::string, std::string, s
 
 json PortOutput::GetRuntimeStatus() const
 {
-    json j;
-    j["id"] = _id;
-    j["type"] = _type;
+    auto j = PortBase::GetRuntimeStatus();
     j["direction"] = "output";
     j["isAsync"] = publisher.IsAsyncMode();
     j["observerCount"] = publisher.NumObservers();
-    j["stats"] = _runtimeStats.ToJson();
 
     json observers = json::array();
     {

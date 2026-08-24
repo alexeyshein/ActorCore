@@ -174,13 +174,10 @@ void PortInput::SetEventOnReceive(std::function<void(std::string,std::shared_ptr
 
 json PortInput::GetRuntimeStatus() const
 {
-    json j;
-    j["id"] = _id;
-    j["type"] = _type;
+    auto j = PortBase::GetRuntimeStatus();
     j["direction"] = "input";
     j["isTrigger"] = isTrigger;
     j["queueSize"] = _queuePtrData.size();
     j["queueCapacity"] = static_cast<int>(_queuePtrData.getMaxSize());
-    j["stats"] = _runtimeStats.ToJson();
     return j;
 }

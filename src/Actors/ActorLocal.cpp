@@ -221,13 +221,14 @@ std::shared_ptr<IPort> ActorLocal::addPort(const std::string& typePort, const st
 				this->OnInputReceive(idPort, ptrData);
 			});
 
-		//  propagate flow trace recorder ---
-		if (_flowTraceRecorder)
+		// --- translate global revision ---
+		if (auto* portBase = dynamic_cast<PortBase*>(portPtr.get()))
 		{
-			if (auto* portBase = dynamic_cast<PortBase*>(portPtr.get()))
-			{
+			if (_flowTraceRecorder)
 				portBase->SetFlowTraceRecorder(_flowTraceRecorder);
-			}
+
+			if (_runtimeStats.pGlobalRevision)
+				portBase->SetGlobalRevisionCounter(_runtimeStats.pGlobalRevision);
 		}
 
 		std::scoped_lock lock(mtx_mapPort);
@@ -427,13 +428,10 @@ json ActorLocal::CollectPortsRuntimeStatus() const
 	std::shared_lock lock(mtx_mapPort);
 	for (const auto& [portId, port] : _mapPorts)
 	{
-		if (auto* inp = dynamic_cast<PortInput*>(port.get()))
+		if (auto* portBase = dynamic_cast<PortBase*>(port.get()))
 		{
-			portsJson[portId] = inp->GetRuntimeStatus();
-		}
-		else if (auto* out = dynamic_cast<PortOutput*>(port.get()))
-		{
-			portsJson[portId] = out->GetRuntimeStatus();
+			// Полиморфизм сам вызовет правильную версию для Input или Output!
+			portsJson[portId] = portBase->GetRuntimeStatus();
 		}
 		else
 		{
@@ -501,4 +499,17 @@ json ActorLocal::GetOperability() const
 	j["reason"] = GetOperabilityReason();
 	j["changedTs"] = _operabilityChangedTs.load(std::memory_order_relaxed);
 	return j;
+}
+
+void ActorLocal::SetGlobalRevisionCounter(std::atomic<uint64_t>* counter)
+{
+	_runtimeStats.pGlobalRevision = counter;
+
+	// Транслируем указатель во все существующие порты актора
+	std::shared_lock lock(mtx_mapPort);
+	for (auto& [portId, port] : _mapPorts)
+	{
+		if (auto* portBase = dynamic_cast<PortBase*>(port.get()))
+			portBase->SetGlobalRevisionCounter(counter);
+	}
 }

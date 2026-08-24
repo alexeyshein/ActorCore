@@ -59,6 +59,7 @@ namespace rf
 
     // --- runtime stats access ---
     const ActorRuntimeStats& GetRuntimeStats() const override { return _runtimeStats; }
+    ActorRuntimeStats& GetRuntimeStats()  { return _runtimeStats; }
 
     void SetFlowTraceRecorder(FlowTraceRecorder* recorder);
     FlowTraceRecorder* GetFlowTraceRecorder() const { return _flowTraceRecorder; }
@@ -67,6 +68,8 @@ namespace rf
     OperabilityState GetOperabilityState() const override;
     std::string GetOperabilityReason() const override;
     json GetOperability() const override;   // {state, reason, changedTs}
+
+    void SetGlobalRevisionCounter(std::atomic<uint64_t>* counter);
 
   protected:
     //void Nottify();

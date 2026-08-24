@@ -59,5 +59,13 @@ void PortBase::SetTypesMessages(const std::set<uint16_t>& typesMessages_)
   typesMessages = typesMessages_;
 }
 
+json PortBase::GetRuntimeStatus() const
+{
+    json j;
+    j["id"] = _id;
+    j["type"] = _type;
+    j["stats"] = _runtimeStats.ToJson();
+    return j;
+}
 
 

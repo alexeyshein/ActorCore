@@ -27,16 +27,13 @@ class PortInput: virtual public  PortBase
   
   SharedQueue<std::shared_ptr<IMessage>>& GetMessageQueueRef() {return _queuePtrData;} 
   
-  // --- runtime stats ---
-  const PortRuntimeStats& GetRuntimeStats() const { return _runtimeStats; }
-  json GetRuntimeStatus() const;
+  json GetRuntimeStatus()  const override;
 
 protected:
    bool isTrigger;
    SharedQueue<std::shared_ptr<IMessage>> _queuePtrData;
    std::function<void(std::string,std::shared_ptr<IMessage>)> functionOnRecive;
 
-   PortRuntimeStats _runtimeStats;
 
   private:
   uint16_t      teleChannelQueueSizeId;

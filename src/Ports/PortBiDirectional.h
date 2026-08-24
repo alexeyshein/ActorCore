@@ -6,7 +6,8 @@
 
 namespace rf
 {
-class PortBiDirectional: public PortInput , public PortOutput
+class 
+PortBiDirectional: public PortInput , public PortOutput
 {
   public:
 
@@ -22,6 +23,7 @@ class PortBiDirectional: public PortInput , public PortOutput
   bool SetProperty(const std::string&, bool) override;
   bool SetProperty(const std::string&, int) override;
 
+  json GetRuntimeStatus() const override;
 };
 }
 

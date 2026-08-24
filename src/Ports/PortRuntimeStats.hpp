@@ -13,22 +13,32 @@ namespace rf
     /// All fields are atomic — safe to read from any thread.
     struct PortRuntimeStats
     {
-        std::atomic<uint64_t> revision{ 0 };      // <-- NEW
+        std::atomic<uint64_t>* pGlobalRevision{ nullptr };
+
+        std::atomic<uint64_t> revision{ 0 };      
         std::atomic<uint64_t> messageCount{ 0 };
         std::atomic<uint64_t> droppedCount{ 0 };
         std::atomic<uint64_t> lastActivityTs{ 0 };
+
+        void BumpRevision()
+        {
+            uint64_t nextRev = pGlobalRevision
+                ? pGlobalRevision->fetch_add(1, std::memory_order_relaxed) + 1
+                : revision.fetch_add(1, std::memory_order_relaxed) + 1;
+            revision.store(nextRev, std::memory_order_relaxed);
+        }
 
         void RecordActivity()
         {
             messageCount.fetch_add(1, std::memory_order_relaxed);
             lastActivityTs.store(SteadyTimeUs(), std::memory_order_relaxed);
-            revision.fetch_add(1, std::memory_order_relaxed);   // <-- NEW
+            BumpRevision(); 
         }
 
         void RecordDrop()
         {
             droppedCount.fetch_add(1, std::memory_order_relaxed);
-            revision.fetch_add(1, std::memory_order_relaxed);   // <-- NEW
+            BumpRevision(); // 
         }
 
         void Reset()

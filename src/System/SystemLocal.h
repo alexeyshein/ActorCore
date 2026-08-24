@@ -103,6 +103,7 @@ namespace rf
     private:
         void RemoveAllConectionsWithActor(std::weak_ptr<IAbstractActor>);
         void InitLogger(std::wstring initParams);
+        void BumpTopology(); // <-- NEW: helper для сдвига топологии
 
     protected:
         std::map<std::string, std::shared_ptr<IAbstractActor>> _mapActors;
@@ -112,5 +113,9 @@ namespace rf
         IUnit* parent;
         json userData;
         FlowTraceRecorder _flowTraceRecorder;
+
+        std::atomic<uint64_t> _globalRevision{ 1 }; // global revision counter
+        std::atomic<uint64_t> _lastTopologyChangeRev{ 1 }; // revision of the last topology change
+
     };
 }

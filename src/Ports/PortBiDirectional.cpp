@@ -17,7 +17,7 @@ bool PortBiDirectional::Init(const json &initJson)
 json PortBiDirectional::Configuration()
 {
   auto config = rf::PortInput::Configuration();
-  auto configOutput = rf::PortInput::Configuration();
+  auto configOutput = rf::PortOutput::Configuration();
   //Merge two json object
   config.insert(configOutput.begin(), configOutput.end()); // --> a=1
                                                            // for (const auto &j : json::iterator_wrapper(configOutput)) {
@@ -30,7 +30,7 @@ std::variant<std::monostate, bool, int, double, std::string> PortBiDirectional::
 {
   auto res = PortInput::GetProperty(propertyName);
   if(std::holds_alternative<std::monostate>(res))
-    res = PortInput::GetProperty(propertyName);
+    res = PortOutput::GetProperty(propertyName);
   return res;
 }
 
@@ -46,4 +46,16 @@ bool PortBiDirectional::SetProperty(const std::string &propertyName, int value)
   if(!PortInput::SetProperty(propertyName, value))
     return PortOutput::SetProperty(propertyName, value);
   return false;
+}
+json PortBiDirectional::GetRuntimeStatus() const
+{
+    auto j = PortInput::GetRuntimeStatus();
+
+    auto jOutput = PortOutput::GetRuntimeStatus();
+
+    j.insert(jOutput.begin(), jOutput.end());
+
+    j["direction"] = "bidirectional";
+
+    return j;
 }

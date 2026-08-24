@@ -25,6 +25,9 @@ using rf::Logger;
 SystemLocal::SystemLocal(const std::string& loggerInitParam) :
     logger(new Logger())
     , userData(json::object())
+    , _globalRevision(WallTimeMs())               // start from current wall clock time in ms
+    , _lastTopologyChangeRev(_globalRevision.load()) // initial sync with global revision
+
 {
   if(logger)
   {
@@ -212,6 +215,7 @@ void SystemLocal::Clear()
     it = _mapActors.erase(it);
   }
   userData = json::object();
+  BumpTopology();
 }
 
 
@@ -404,7 +408,11 @@ bool SystemLocal::Attach(std::shared_ptr<IAbstractActor> actorPtr)
   if (auto* actorLocal = dynamic_cast<ActorLocal*>(actorPtr.get()))
   {
       actorLocal->SetFlowTraceRecorder(&_flowTraceRecorder);
+
+      actorLocal->SetGlobalRevisionCounter(&_globalRevision);
+      actorLocal->GetRuntimeStats().Touch();
   }
+  BumpTopology();
   return true;
 }
 
@@ -424,8 +432,15 @@ std::shared_ptr<IAbstractActor> SystemLocal::Detach(std::string id)
   //separate to avoid deadlock in RemoveAllConectionsWithActor
   if (actor)
   {
+      if (auto* actorLocal = dynamic_cast<ActorLocal*>(actor.get()))
+      {
+          actorLocal->SetGlobalRevisionCounter(nullptr);
+      }
+
       this->RemoveAllConectionsWithActor(actor);
       actor->SetParent(nullptr);   
+
+      BumpTopology();
   }
   return actor;
 }
@@ -479,7 +494,12 @@ bool SystemLocal::Connect(std::string idActor1, std::string idPortActor1, std::s
   if (!actor2)
     return false;
 
-  return actor2->ConnectTo(actor1, idPortActor1, idPortActor2);
+  bool res = actor2->ConnectTo(actor1, idPortActor1, idPortActor2);
+  if (res)
+  {
+      BumpTopology(); // 
+  }
+  return res;
 }
 
 
@@ -522,6 +542,8 @@ void SystemLocal::Disconnect(std::string idActor1, std::string idPortActor1, std
     auto port1 = actor2->GetPortById(idPortActor2);
     if (port1.lock())
       actor2->Disconnect(idActor1, port1, idPortActor2);
+
+    BumpTopology();
   }
 }
 
@@ -882,11 +904,28 @@ json SystemLocal::GetRuntimeStatus()
 
 json SystemLocal::GetRuntimeDelta(uint64_t sinceRevision)
 {
+    uint64_t currentRev = _globalRevision.load(std::memory_order_relaxed);
+    uint64_t topologyRev = _lastTopologyChangeRev.load(std::memory_order_relaxed);
+
+    // --- TOPOLOGY RESET OR SERVICE RESTART CHECK ---
+    if (sinceRevision > currentRev || sinceRevision < topologyRev)
+    {
+        json result;
+        result["resetTopology"] = true;
+        result["sinceRevision"] = sinceRevision;
+        result["currentRevision"] = currentRev;
+        result["timestamp"] = WallTimeMs();
+        result["steadyTs"] = SteadyTimeUs();
+        return result; //  Instant response: frontend will request full status/scheme
+    }
+
+    // --- NORMAL TELEMETRY DELTA COLLECTION ---
     json result;
     result["timestamp"] = WallTimeMs();
     result["steadyTs"] = SteadyTimeUs();
-
-    uint64_t maxRevision = sinceRevision;
+    result["resetTopology"] = false;
+    result["sinceRevision"] = sinceRevision;
+    result["currentRevision"] = currentRev;
 
     json changedActors = json::object();
     json changedLinks = json::array();
@@ -905,13 +944,13 @@ json SystemLocal::GetRuntimeDelta(uint64_t sinceRevision)
 
             bool actorChanged = false;
 
+            // Check if actor itself changed
             const auto& actorStats = actor->GetRuntimeStats();
             uint64_t actorRev = actorStats.revision.load(std::memory_order_relaxed);
-            if (actorRev > maxRevision)
-                maxRevision = actorRev;
             if (actorRev > sinceRevision)
                 actorChanged = true;
 
+            // Check if actor ports changed
             auto ports = actor->GetPorts();
             for (auto& weakPort : ports)
             {
@@ -919,19 +958,9 @@ json SystemLocal::GetRuntimeDelta(uint64_t sinceRevision)
                 if (!port)
                     continue;
 
-                if (auto* inp = dynamic_cast<PortInput*>(port.get()))
+                if (auto* portBase = dynamic_cast<PortBase*>(port.get()))
                 {
-                    uint64_t portRev = inp->GetRuntimeStats().revision.load(std::memory_order_relaxed);
-                    if (portRev > maxRevision)
-                        maxRevision = portRev;
-                    if (portRev > sinceRevision)
-                        actorChanged = true;
-                }
-                else if (auto* out = dynamic_cast<PortOutput*>(port.get()))
-                {
-                    uint64_t portRev = out->GetRuntimeStats().revision.load(std::memory_order_relaxed);
-                    if (portRev > maxRevision)
-                        maxRevision = portRev;
+                    uint64_t portRev = portBase->GetRuntimeStats().revision.load(std::memory_order_relaxed);
                     if (portRev > sinceRevision)
                         actorChanged = true;
                 }
@@ -959,12 +988,6 @@ json SystemLocal::GetRuntimeDelta(uint64_t sinceRevision)
                             linkRuntime["idActorDst"] = dstActorId;
                             linkRuntime["idPortDst"] = dstPortId;
 
-                            //json linkUserData = portOut->GetLinkUserData(dstActorId, dstPortId);
-                            //if (!linkUserData.empty())
-                            //{
-                            //    linkRuntime["userData"] = linkUserData;
-                            //}
-
                             json linkStats;
                             linkStats["lastActivityTs"] = portOut->GetRuntimeStats().lastActivityTs.load(std::memory_order_relaxed);
                             linkStats["messageCount"] = portOut->GetRuntimeStats().messageCount.load(std::memory_order_relaxed);
@@ -982,8 +1005,6 @@ json SystemLocal::GetRuntimeDelta(uint64_t sinceRevision)
     summary["totalActors"] = totalActors;
     summary["activeActors"] = activeActors;
 
-    result["sinceRevision"] = sinceRevision;
-    result["currentRevision"] = maxRevision;
     result["summary"] = summary;
     result["actors"] = changedActors;
     result["links"] = changedLinks;
@@ -1061,6 +1082,12 @@ json SystemLocal::GetActorRecentFlowTrace(const std::string& actorId,
         fromTs = (deltaUs < now) ? (now - deltaUs) : 0;
     }
     return _flowTraceRecorder.QueryByActor(actorId, fromTs, toTs, limit);
+}
+
+void SystemLocal::BumpTopology()
+{
+    uint64_t nextRev = ++_globalRevision;
+    _lastTopologyChangeRev.store(nextRev, std::memory_order_relaxed);
 }
 
 

@@ -3,6 +3,7 @@
 #include "IPort.h"
 #include "IMessage.h"
 #include "MessagePublisherFunctor.hpp"
+#include "PortRuntimeStats.hpp" // 
 #include <memory>
 #include <string>
 
@@ -59,6 +60,16 @@ namespace rf
     // 
     void SetFlowTraceRecorder(FlowTraceRecorder* recorder) { _flowTraceRecorder = recorder; }
 
+    void SetGlobalRevisionCounter(std::atomic<uint64_t>* counter)
+    {
+        _runtimeStats.pGlobalRevision = counter;
+    }
+
+    const PortRuntimeStats& GetRuntimeStats() const { return _runtimeStats; }
+    PortRuntimeStats& GetRuntimeStats() { return _runtimeStats; }
+
+    virtual json GetRuntimeStatus() const;
+
   protected:
     IUnit* _parent;
     std::string _id;
@@ -68,6 +79,7 @@ namespace rf
     std::set<uint16_t> typesMessages;//
     json userData;
 
+    PortRuntimeStats   _runtimeStats; // <-- NEW: Перенесено из PortInput/PortOutput в PortBase
     FlowTraceRecorder* _flowTraceRecorder = nullptr;   // non-owning
   };
 }
