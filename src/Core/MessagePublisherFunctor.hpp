@@ -133,20 +133,34 @@ void MessagePublisherFunctor<T>::CleanObservers()
 template<class T>
 void MessagePublisherFunctor<T>::SanitizeQueue()
 {
-	std::scoped_lock mlock(_mutex);
+	//std::scoped_lock mlock(_mutex);
 	bool ready = true;
 	while (ready)
 	{
-		ready = false;
-		if (!_myFutureQueue.empty())
+		// Atomically inspect + pop under SharedQueue's own mutex.
+		// No need to hold _mutex here.
+		auto readyFuture = _myFutureQueue.pop_front_if([](auto& frontFuture)
+			{
+				return frontFuture.wait_for(std::chrono::nanoseconds(40))
+					== std::future_status::ready;
+			});
+
+		if (readyFuture.has_value())
 		{
-			std::future<void> &front = _myFutureQueue.front();
-			std::future_status status = front.wait_for(std::chrono::nanoseconds(40));
-			if (status == std::future_status::ready)
-			 {
-			 	_myFutureQueue.pop_front();
-			 	ready = true;
-			 }
+			try
+			{
+				// Consume result/exception outside any lock
+				readyFuture->get();
+			}
+			catch (...)
+			{
+				// Swallow async notify exceptions (or log if needed)
+			}
+			ready = true;
+		}
+		else
+		{
+			ready = false; // queue empty or front task not ready
 		}
 	}
 }

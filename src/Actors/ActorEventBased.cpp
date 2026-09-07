@@ -240,24 +240,30 @@ void ActorEventBased::SanitizeQueue()
 	bool ready = true;
 	while (ready)
 	{
-		ready = false;
-		if (!myFutureQueue.empty())
+		auto readyFuture = myFutureQueue.pop_front_if([](auto& frontFuture) {
+			return frontFuture.wait_for(std::chrono::nanoseconds(40)) == std::future_status::ready;
+			});
+
+		if (readyFuture.has_value())
 		{
-			std::future<void>& front = myFutureQueue.front();
-			std::future_status status = front.wait_for(std::chrono::nanoseconds(40));
-			if (status == std::future_status::ready)
+			try
 			{
-				try { //catch exception from async task
-					front.get();
-				}
-				catch (const std::exception& e)
-				{
-					logger->WARNING(0, TM("%s Async task exception :%s"), Id().c_str(), e.what());
-				}
-				myFutureQueue.pop_front();
-				ready = true;
-				logger->Telemetry(teleChannelActiveTasks, myFutureQueue.size());
+				readyFuture->get();
 			}
+			catch (const std::exception& e)
+			{
+				logger->WARNING(0, TM("%s Async task exception :%s"), Id().c_str(), e.what());
+			}
+			catch (...)
+			{
+				logger->WARNING(0, TM("%s Async task unknown exception"), Id().c_str());
+			}
+			ready = true;
+			logger->Telemetry(teleChannelActiveTasks, myFutureQueue.size());
+		}
+		else
+		{
+			ready = false;
 		}
 	}
 }

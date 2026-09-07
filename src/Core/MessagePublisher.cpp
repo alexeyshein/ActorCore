@@ -75,16 +75,24 @@ void MessagePublisher::SanitizeQueue()
 	bool ready = true;
 	while (ready)
 	{
-		ready = false;
-		if (!myFutureQueue.empty())
+		auto readyFuture = myFutureQueue.pop_front_if([](auto& frontFuture) {
+			return frontFuture.wait_for(std::chrono::nanoseconds(40)) == std::future_status::ready;
+			});
+
+		if (readyFuture.has_value())
 		{
-			std::future<void> &front = myFutureQueue.front();
-			std::future_status status = front.wait_for(std::chrono::nanoseconds(40));
-			if (status == std::future_status::ready)
-			 {
-			 	myFutureQueue.pop_front();
-			 	ready = true;
-			 }
+			try
+			{
+				readyFuture->get();
+			}
+			catch (...)
+			{
+			}
+			ready = true;
+		}
+		else
+		{
+			ready = false; 
 		}
 	}
 }
