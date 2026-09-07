@@ -15,7 +15,7 @@ PortInput::PortInput(std::string id, IUnit* parent)
 : PortBase(id, parent )
 , functionOnRecive(nullptr)
 , isTrigger(true)
-, _queuePtrData(1)
+, _queuePtrData(2)
 {
   _type = "PortInput";
   std::string idParent{""};
@@ -82,7 +82,7 @@ std::variant<std::monostate, bool, int, double, std::string> PortInput::GetPrope
 
 bool PortInput::SetProperty(const std::string& propertyName, bool value) 
 {
-  if(propertyName.compare("isTrigger"))
+  if(propertyName.compare("isTrigger")==0)
     {
       isTrigger = value;
       return true;
@@ -92,7 +92,7 @@ bool PortInput::SetProperty(const std::string& propertyName, bool value)
 
 bool  PortInput::SetProperty(const std::string& propertyName, int value)
 {
-  if(propertyName.compare("queueMessagesSize"))
+  if(propertyName.compare("queueMessagesSize")==0)
     {
       _queuePtrData.setMaxSize(value);
       return true;
@@ -102,7 +102,7 @@ bool  PortInput::SetProperty(const std::string& propertyName, int value)
 
 bool PortInput::SetProperty(const std::string& propertyName, std::string value) 
 {
-  if(propertyName.compare("queueMessagesModeFull"))
+  if(propertyName.compare("queueMessagesModeFull")==0)
     {
       if(value.compare("Skip") == 0)
         _queuePtrData.setModeFull(ModeQueueFull::Nothing);
@@ -117,50 +117,38 @@ bool PortInput::SetProperty(const std::string& propertyName, std::string value)
 void PortInput::Receive(std::shared_ptr<IMessage> dataPtr)
 {
     //TODO add check for compliance with data and typesMessages
-    
-    // --- track drops ---
-    bool wasFull = _queuePtrData.isFull()
-        && _queuePtrData.getModeFull() == ModeQueueFull::Nothing;
-
-   _queuePtrData.push_back(dataPtr);
-    logger->Telemetry(teleChannelQueueSizeId, _queuePtrData.size());
-    
-    // --- update runtime stats ---
-    if (wasFull)
+    if (_queuePtrData.getMaxSize() > 0)
     {
-        _runtimeStats.RecordDrop();
-        if (_flowTraceRecorder && _flowTraceRecorder->IsEnabled())
-        {
-            _flowTraceRecorder->Record({
-                SteadyTimeUs(),
-                FlowTraceEventType::PortDrop,
-                FlowTraceHash(_parent ? _parent->Id() : ""),
-                FlowTraceHash(_id),
-                dataPtr->Id(),
-                dataPtr->Type(),
-                FlowTraceHash(dataPtr->IdSender()),
-                FlowTraceHash(dataPtr->IdPortSender()),
-                static_cast<uint32_t>(_queuePtrData.size())
-                });
-        }
+        // --- track drops ---
+        bool wasFull = _queuePtrData.isFull()
+            && _queuePtrData.getModeFull() == ModeQueueFull::Nothing;
+
+        _queuePtrData.push_back(dataPtr);
+        logger->Telemetry(teleChannelQueueSizeId, _queuePtrData.size());
+        if (wasFull)
+            _runtimeStats.RecordDrop();
+        else
+            _runtimeStats.RecordActivity();
     }
     else
     {
+        // 
         _runtimeStats.RecordActivity();
-        if (_flowTraceRecorder && _flowTraceRecorder->IsEnabled())
-        {
-            _flowTraceRecorder->Record({
-                SteadyTimeUs(),
-                FlowTraceEventType::PortReceive,
-                FlowTraceHash(_parent ? _parent->Id() : ""),
-                FlowTraceHash(_id),
-                dataPtr->Id(),
-                dataPtr->Type(),
-                FlowTraceHash(dataPtr->IdSender()),
-                FlowTraceHash(dataPtr->IdPortSender()),
-                static_cast<uint32_t>(_queuePtrData.size())
-                });
-        }
+    }
+    // --- update runtime stats ---
+    if (_flowTraceRecorder && _flowTraceRecorder->IsEnabled())
+    {
+        _flowTraceRecorder->Record({
+            SteadyTimeUs(),
+            FlowTraceEventType::PortReceive,
+            FlowTraceHash(_parent ? _parent->Id() : ""),
+            FlowTraceHash(_id),
+            dataPtr->Id(),
+            dataPtr->Type(),
+            FlowTraceHash(dataPtr->IdSender()),
+            FlowTraceHash(dataPtr->IdPortSender()),
+            static_cast<uint32_t>(_queuePtrData.getMaxSize() > 0 ? _queuePtrData.size() : 0)
+            });
     }
 
    if(isTrigger && functionOnRecive)
