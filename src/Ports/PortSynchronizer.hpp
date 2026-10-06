@@ -17,35 +17,46 @@ namespace rf
     {
         AnyData = 1, // Process if ANY queue has data (missing ports yield nullptr in batch)
         ExactId = 2, // Exact ID matching across all N ports (drops lagging items)
-        AllData = 3  // Wait until ALL N queues have at least one message
+        AllData = 3,  // Wait until ALL N queues have at least one message
+        TimeWindow = 4 // Match heads by timestamp within maxSkew; drop stale messages exceeding maxAge
     };
 
     NLOHMANN_JSON_SERIALIZE_ENUM(PortSyncPolicy, {
         {PortSyncPolicy::AnyData, "AnyData"},
         {PortSyncPolicy::ExactId, "ExactId"},
-        {PortSyncPolicy::AllData, "AllData"}
-        })
+        {PortSyncPolicy::AllData, "AllData"},
+        {PortSyncPolicy::TimeWindow, "TimeWindow" }
+     })
+        
+    struct TimeWindowParams
+    {
+        int64_t maxSkewUs = 5000;   // Maximum allowed timestamp difference between sensors (us)
+        int64_t maxAgeUs = 100000;  // Maximum message age before it is discarded (us), 0 = no limit
+    };
 
-        class PortSynchronizer
+    class PortSynchronizer
     {
     public:
         using MessagePtr = std::shared_ptr<IMessage>;
         using MessageBatch = std::vector<MessagePtr>; // Size N matching inputPorts.size()
         using Callback = std::function<void(const MessageBatch&)>;
 
+        /// 1. MAIN SYNCHRONIZER (for PortInput*)
         /// Synchronizes messages across N input ports using the specified policy.
         /// Calls `callback` for every processed batch.
         /// Returns total number of processed batches.
-        static size_t Synchronize(const std::vector<PortInput*>& inputPorts,
+        static size_t Synchronize(
+            const std::vector<PortInput*>& inputPorts,
             PortSyncPolicy policy,
-            Callback callback)
+            Callback callback,
+            const TimeWindowParams& twParams = {}) // Handles all policies. Default is empty.
         {
             if (inputPorts.empty() || !callback)
                 return 0;
 
             const size_t numPorts = inputPorts.size();
 
-            // 1. Single port bypass
+            // Single port bypass
             if (numPorts == 1)
             {
                 size_t count = 0;
@@ -61,27 +72,24 @@ namespace rf
                 return count;
             }
 
-            // 2. Multi-port synchronization policies
+            // Multi-port synchronization policies
             switch (policy)
             {
-            case PortSyncPolicy::AnyData:
-                return SynchronizeAnyData(inputPorts, callback);
-
-            case PortSyncPolicy::ExactId:
-                return SynchronizeExactId(inputPorts, callback);
-
-            case PortSyncPolicy::AllData:
-                return SynchronizeAllData(inputPorts, callback);
-
-            default:
-                return 0;
+            case PortSyncPolicy::AnyData:    return SynchronizeAnyData(inputPorts, callback);
+            case PortSyncPolicy::ExactId:    return SynchronizeExactId(inputPorts, callback);
+            case PortSyncPolicy::AllData:    return SynchronizeAllData(inputPorts, callback);
+            case PortSyncPolicy::TimeWindow: return SynchronizeTimeWindow(inputPorts, callback, twParams);
+            default: return 0;
             }
         }
 
-        /// Convenience overload accepting std::vector<std::shared_ptr<IPort>>
-        static size_t Synchronize(const std::vector<std::shared_ptr<IPort>>& ports,
+        /// 2. CONVENIENCE OVERLOAD (for std::shared_ptr<IPort>)
+        /// Converts shared_ptr<IPort> to PortInput* and calls the main synchronizer.
+        static size_t Synchronize(
+            const std::vector<std::shared_ptr<IPort>>& ports,
             PortSyncPolicy policy,
-            Callback callback)
+            Callback callback,
+            const TimeWindowParams& twParams = {}) // Added default parameter here too
         {
             std::vector<PortInput*> inputPorts;
             inputPorts.reserve(ports.size());
@@ -100,7 +108,8 @@ namespace rf
                 return 0;
             }
 
-            return Synchronize(inputPorts, policy, callback);
+            // Forward to the main method with all parameters
+            return Synchronize(inputPorts, policy, callback, twParams);
         }
 
     private:
@@ -320,5 +329,128 @@ namespace rf
 
             return batchCount;
         }
-    };
+    
+
+        // ===================================================================
+        // 4. POLICY: TimeWindow (Timestamp matching within maxSkew, stale purge)
+        // ===================================================================
+        static size_t SynchronizeTimeWindow(
+            const std::vector<PortInput*>& inputPorts,
+            const Callback& callback,
+            const TimeWindowParams& params)
+        {
+            const size_t numPorts = inputPorts.size();
+            size_t batchCount = 0;
+
+            auto nowUs = []() -> int64_t {
+                return std::chrono::duration_cast<std::chrono::microseconds>(
+                    std::chrono::system_clock::now().time_since_epoch()).count();
+                };
+
+            while (true)
+            {
+                // ── Step 0: Purge stale messages exceeding maxAge ──
+                if (params.maxAgeUs > 0)
+                {
+                    int64_t now = nowUs();
+                    for (size_t i = 0; i < numPorts; ++i)
+                    {
+                        auto& q = inputPorts[i]->GetMessageQueueRef();
+                        while (true)
+                        {
+                            auto opt = q.try_front();
+                            if (!opt.has_value() || !(*opt))
+                                break;
+                            int64_t age = now - static_cast<int64_t>((*opt)->Timestamp());
+                            if (age > params.maxAgeUs)
+                            {
+                                MessagePtr dummy;
+                                q.pop_front_if(
+                                    [&msg = *opt](const MessagePtr& item) { return item == msg; },
+                                    dummy);
+                            }
+                            else
+                            {
+                                break; // queue is ordered by time
+                            }
+                        }
+                    }
+                }
+
+                // ── Step 1: Peek at all queue heads ──
+                std::vector<MessagePtr> heads(numPorts);
+                std::vector<int64_t> timestamps(numPorts);
+                bool allHaveHeads = true;
+
+                for (size_t i = 0; i < numPorts; ++i)
+                {
+                    auto opt = inputPorts[i]->GetMessageQueueRef().try_front();
+                    if (!opt.has_value() || !(*opt))
+                    {
+                        allHaveHeads = false;
+                        break;
+                    }
+                    heads[i] = *opt;
+                    timestamps[i] = static_cast<int64_t>(heads[i]->Timestamp());
+                }
+
+                if (!allHaveHeads)
+                    break; // waiting for data
+
+                // ── Step 2: Check timestamp spread across all heads ──
+                int64_t minTs = timestamps[0];
+                int64_t maxTs = timestamps[0];
+                size_t minIdx = 0;
+
+                for (size_t i = 1; i < numPorts; ++i)
+                {
+                    if (timestamps[i] < minTs) { minTs = timestamps[i]; minIdx = i; }
+                    if (timestamps[i] > maxTs) { maxTs = timestamps[i]; }
+                }
+
+                int64_t skew = maxTs - minTs;
+
+                if (skew <= params.maxSkewUs)
+                {
+                    // ── Match! Pop all heads and invoke callback ──
+                    MessageBatch batch;
+                    batch.reserve(numPorts);
+                    bool popOk = true;
+
+                    for (size_t i = 0; i < numPorts; ++i)
+                    {
+                        auto target = heads[i];
+                        MessagePtr popped;
+                        bool ok = inputPorts[i]->GetMessageQueueRef().pop_front_if(
+                            [&target](const MessagePtr& item) { return item == target; },
+                            popped);
+
+                        if (ok && popped)
+                            batch.push_back(std::move(popped));
+                        else
+                        {
+                            popOk = false;
+                            break;
+                        }
+                    }
+
+                    if (popOk && batch.size() == numPorts)
+                    {
+                        callback(batch);
+                        ++batchCount;
+                    }
+                }
+                else
+                {
+                    // ── Desync! Drop the oldest (lagging) head ──
+                    auto target = heads[minIdx];
+                    inputPorts[minIdx]->GetMessageQueueRef().pop_front_if(
+                        [&target](const MessagePtr& item) { return item == target; });
+                }
+            }
+
+            return batchCount;
+        }
+
+};
 }
