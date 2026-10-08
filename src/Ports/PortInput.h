@@ -18,6 +18,7 @@ class PortInput: virtual public  PortBase
   json Configuration() override;
   
   std::variant<std::monostate, bool, int, double, std::string> GetProperty(const std::string&) override;
+  bool SetProperties(const json&) override;
   bool SetProperty(const std::string&, bool) override;
   bool SetProperty(const std::string&, int) override;
   bool SetProperty(const std::string&, std::string) override;

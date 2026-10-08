@@ -80,6 +80,31 @@ std::variant<std::monostate, bool, int, double, std::string> PortInput::GetPrope
 }
 
 
+bool PortInput::SetProperties(const json& properties)
+{
+    PortBase::SetProperties(properties);
+
+    if (properties.contains("isTrigger"))
+        if (properties.at("isTrigger").is_boolean())
+        {
+            isTrigger = properties.at("isTrigger").get<bool>();
+        }
+    if (properties.contains("queueMessagesSize"))
+        if (properties.at("queueMessagesSize").is_number())
+        {
+            auto queueMessagesSize = properties.at("queueMessagesSize").get<size_t>();
+            _queuePtrData.setMaxSize(queueMessagesSize);
+        }
+    if (properties.contains("queueMessagesModeFull"))
+        if (properties.at("queueMessagesModeFull").is_string())
+        {
+            auto queueMessagesModeFullNew = properties.at("queueMessagesModeFull").get<std::string>();
+            SetProperty("queueMessagesModeFull", queueMessagesModeFullNew);
+        }
+    return true;
+}
+
+
 bool PortInput::SetProperty(const std::string& propertyName, bool value) 
 {
   if(propertyName.compare("isTrigger")==0)

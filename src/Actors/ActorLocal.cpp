@@ -38,6 +38,30 @@ bool ActorLocal::Init(const json& actorConfig)
 	{
 		this->SetProperties(actorConfig.at("properties"));
 	}
+	if (actorConfig.contains("ports") && actorConfig.at("ports").is_array())
+	{
+		for (const auto& portJson : actorConfig.at("ports"))
+		{
+			if (!portJson.contains("id") || !portJson.at("id").is_string())
+				continue;
+
+			std::string portId = portJson.at("id").get<std::string>();
+			auto weakPort = GetPortById(portId);
+
+			if (auto port = weakPort.lock())
+			{
+				// Порт уже создан в конструкторе актора — применяем свойства из JSON
+				port->Init(portJson);
+				port->SetProperties(portJson);
+			}
+			else
+			{
+				// Порт отсутствует (динамический порт) — создаём и инициализируем
+				addPort(portJson);
+			}
+		}
+	}
+	
 	if (actorConfig.contains("userData"))
 		userData = actorConfig.at("userData");
 	logger->DEBUG(0, TM("%s initialized"), Id().c_str());

@@ -19,6 +19,7 @@ PortBase::~PortBase() = default;
 
 bool PortBase::Init(const json& config)
 {
+    SetProperties(config);
     if (config.contains("userData"))
         userData = config.at("userData");
     if (config.contains("dataTypes"))
